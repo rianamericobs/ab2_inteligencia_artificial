@@ -1,0 +1,9 @@
+chaveAPI.py
+
+.venv/
+
+__pycache__
+
+requirements.txt
+
+backend/__pycache__
