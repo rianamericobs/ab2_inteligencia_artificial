@@ -1,0 +1,1360 @@
+{
+  "domain": "triagem_ambulatorial",
+  "description": "Sistema de triagem ambulatorial para UPA/UBS. Auxilia na classificação de risco e direcionamento do paciente. NÃO substitui avaliação médica.",
+  "hypotheses": [
+    "classificacao_risco",
+    "hipotese_diagnostica",
+    "conduta_triagem",
+    "encaminhamento",
+    "orientacao_paciente"
+  ],
+  "initial_facts": [],
+  "rules": [
+    {
+      "id": "R01",
+      "name": "VERMELHO — Saturação crítica",
+      "priority": 20,
+      "description": "SpO2 < 90% — risco iminente de vida",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "saturacao_o2",
+          "operator": "<",
+          "value": "90"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "VERMELHO — Emergência (atendimento imediato)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R02",
+      "name": "VERMELHO — Crise hipertensiva grave",
+      "priority": 20,
+      "description": "PAS > 180 + alteração de consciência — emergência hipertensiva",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "pressao_sistolica",
+          "operator": ">",
+          "value": "180"
+        },
+        {
+          "attribute": "nivel_consciencia",
+          "operator": "!=",
+          "value": "alerta"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "VERMELHO — Emergência (atendimento imediato)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R03",
+      "name": "VERMELHO — Inconsciência",
+      "priority": 20,
+      "description": "Paciente inconsciente — Glasgow < 9",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "nivel_consciencia",
+          "operator": "=",
+          "value": "inconsciente"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "VERMELHO — Emergência (atendimento imediato)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R04",
+      "name": "VERMELHO — Rigidez de nuca",
+      "priority": 20,
+      "description": "Febre + rigidez de nuca — suspeita de meningite",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "rigidez_nuca",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "VERMELHO — Emergência (atendimento imediato)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R05",
+      "name": "LARANJA — Dispneia grave",
+      "priority": 18,
+      "description": "Insuficiência respiratória moderada-grave",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "falta_ar",
+          "operator": "=",
+          "value": "grave"
+        },
+        {
+          "attribute": "saturacao_o2",
+          "operator": "<",
+          "value": "94"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "LARANJA — Muito Urgente (até 10 min)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R06",
+      "name": "LARANJA — Crise hipertensiva sintomática",
+      "priority": 18,
+      "description": "PAS > 180 com cefaleia — urgência hipertensiva",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "pressao_sistolica",
+          "operator": ">",
+          "value": "180"
+        },
+        {
+          "attribute": "dor_cabeca",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "LARANJA — Muito Urgente (até 10 min)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R07",
+      "name": "LARANJA — Desidratação grave",
+      "priority": 18,
+      "description": "Desidratação grave com rebaixamento",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "desidratação",
+          "operator": "=",
+          "value": "grave"
+        },
+        {
+          "attribute": "nivel_consciencia",
+          "operator": "!=",
+          "value": "alerta"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "LARANJA — Muito Urgente (até 10 min)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R08",
+      "name": "LARANJA — Dengue com sinais de alarme",
+      "priority": 18,
+      "description": "Dengue com sinais de alarme — risco de dengue grave",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "sangramento_espontaneo",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "manchas_pele",
+          "operator": "=",
+          "value": "petequias"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "LARANJA — Muito Urgente (até 10 min)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R09",
+      "name": "AMARELO — Síndrome febril + prostração",
+      "priority": 15,
+      "description": "Febre alta com comprometimento do estado geral",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "prostração",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "AMARELO — Urgente (até 60 min)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R10",
+      "name": "AMARELO — Diarreia intensa com desidratação",
+      "priority": 15,
+      "description": "Diarreia grave com desidratação moderada",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "diarreia",
+          "operator": "=",
+          "value": "mais_de_6"
+        },
+        {
+          "attribute": "desidratação",
+          "operator": "=",
+          "value": "moderada"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "AMARELO — Urgente (até 60 min)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R11",
+      "name": "AMARELO — Crise asmática moderada",
+      "priority": 15,
+      "description": "Asma sem resposta ao broncodilatador",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "chiado_peito",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "falta_ar",
+          "operator": "=",
+          "value": "moderada"
+        },
+        {
+          "attribute": "uso_broncodilatador",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "AMARELO — Urgente (até 60 min)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R12",
+      "name": "AMARELO — Gestante febril",
+      "priority": 16,
+      "description": "Febre em gestante — risco para feto",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "gravidez",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "AMARELO — Urgente (até 60 min)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R13",
+      "name": "VERDE — Quadro gripal leve",
+      "priority": 10,
+      "description": "Síndrome gripal sem comprometimento respiratório",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "tosse",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "saturacao_o2",
+          "operator": ">=",
+          "value": "95"
+        },
+        {
+          "attribute": "prostração",
+          "operator": "=",
+          "value": "nao"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "VERDE — Pouco Urgente (até 2h)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R14",
+      "name": "VERDE — ITU simples",
+      "priority": 10,
+      "description": "ITU baixa sem febre — cistite simples",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "disuria",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "polaciuria",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "nao"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "VERDE — Pouco Urgente (até 2h)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R15",
+      "name": "VERDE — Diarreia leve sem desidratação",
+      "priority": 10,
+      "description": "Gastroenterite leve, hidratado",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "diarreia",
+          "operator": "=",
+          "value": "1-3"
+        },
+        {
+          "attribute": "desidratação",
+          "operator": "=",
+          "value": "nao"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "VERDE — Pouco Urgente (até 2h)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R16",
+      "name": "AZUL — Queixa leve sem febre",
+      "priority": 5,
+      "description": "Queixa menor, estável, sem risco identificado",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "nao"
+        },
+        {
+          "attribute": "falta_ar",
+          "operator": "=",
+          "value": "nao"
+        },
+        {
+          "attribute": "nivel_consciencia",
+          "operator": "=",
+          "value": "alerta"
+        },
+        {
+          "attribute": "pressao_sistolica",
+          "operator": "<",
+          "value": "160"
+        }
+      ],
+      "conclusion": {
+        "attribute": "classificacao_risco",
+        "value": "AZUL — Não Urgente (ordem de chegada)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R17",
+      "name": "Hipótese: Influenza / Síndrome Gripal",
+      "priority": 12,
+      "description": "Tríade clássica: febre + tosse + mialgia + coriza",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "tosse",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "dor_corpo",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "coriza",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "hipotese_diagnostica",
+        "value": "Influenza / Síndrome Gripal",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R18",
+      "name": "Hipótese: COVID-19 suspeito",
+      "priority": 13,
+      "description": "Síndrome respiratória aguda com febre e tosse",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "tosse",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "falta_ar",
+          "operator": "=",
+          "value": "moderada"
+        }
+      ],
+      "conclusion": {
+        "attribute": "hipotese_diagnostica",
+        "value": "COVID-19 / SRAG — solicitar teste",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R19",
+      "name": "Hipótese: Amigdalite Bacteriana",
+      "priority": 12,
+      "description": "Critérios de Centor: exsudato + febre + sem coriza",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "dor_garganta",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "amigdalas_exsudato",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "coriza",
+          "operator": "=",
+          "value": "nao"
+        }
+      ],
+      "conclusion": {
+        "attribute": "hipotese_diagnostica",
+        "value": "Amigdalite Bacteriana (avaliar antibiótico)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R20",
+      "name": "Hipótese: Gastroenterite Aguda",
+      "priority": 12,
+      "description": "Tríade: diarreia + vômito + dor abdominal",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "diarreia",
+          "operator": "!=",
+          "value": "nao"
+        },
+        {
+          "attribute": "náusea_vomito",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "dor_abdominal",
+          "operator": "!=",
+          "value": "nao"
+        }
+      ],
+      "conclusion": {
+        "attribute": "hipotese_diagnostica",
+        "value": "Gastroenterite Aguda (viral ou bacteriana)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R21",
+      "name": "Hipótese: Dengue Clássica",
+      "priority": 13,
+      "description": "Febre + mialgia + dor retroocular + epidemiologia",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "dor_corpo",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "dor_olhos",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "contato_dengue",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "hipotese_diagnostica",
+        "value": "Dengue — solicitar NS1/sorologia",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R22",
+      "name": "Hipótese: Dengue com Sinais de Alarme",
+      "priority": 17,
+      "description": "Petéquias + sangramento — dengue grave",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "manchas_pele",
+          "operator": "=",
+          "value": "petequias"
+        },
+        {
+          "attribute": "sangramento_espontaneo",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "hipotese_diagnostica",
+        "value": "Dengue Grave — internação urgente",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R23",
+      "name": "Hipótese: Infecção Urinária Baixa (Cistite)",
+      "priority": 11,
+      "description": "Disúria + polaciúria + urina turva sem febre",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "disuria",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "polaciuria",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "urina_turva",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "nao"
+        }
+      ],
+      "conclusion": {
+        "attribute": "hipotese_diagnostica",
+        "value": "Cistite — ITU Baixa",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R24",
+      "name": "Hipótese: Pielonefrite",
+      "priority": 14,
+      "description": "ITU + febre + dor em flanco — infecção renal",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "disuria",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "dor_lombar_flanco",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "hipotese_diagnostica",
+        "value": "Pielonefrite — ITU Alta (internação a avaliar)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R25",
+      "name": "Hipótese: Crise Hipertensiva",
+      "priority": 16,
+      "description": "PAS > 180 em hipertenso conhecido",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "pressao_sistolica",
+          "operator": ">",
+          "value": "180"
+        },
+        {
+          "attribute": "historico_hipertensao",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "hipotese_diagnostica",
+        "value": "Crise Hipertensiva — Urgência/Emergência",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R26",
+      "name": "Hipótese: Crise Asmática",
+      "priority": 14,
+      "description": "Asma + sibilância + dispneia moderada",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "chiado_peito",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "historico_asma",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "falta_ar",
+          "operator": "=",
+          "value": "moderada"
+        }
+      ],
+      "conclusion": {
+        "attribute": "hipotese_diagnostica",
+        "value": "Crise Asmática Moderada",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R27",
+      "name": "Hipótese: Meningite",
+      "priority": 20,
+      "description": "Tríade de Kernig: febre + rigidez + cefaleia",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "rigidez_nuca",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "dor_cabeca",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "hipotese_diagnostica",
+        "value": "Meningite — emergência neurológica",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R28",
+      "name": "Conduta: O2 imediato",
+      "priority": 20,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "saturacao_o2",
+          "operator": "<",
+          "value": "94"
+        }
+      ],
+      "conclusion": {
+        "attribute": "conduta_triagem",
+        "value": "Administrar O₂ imediatamente + acesso venoso + chamar médico",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R29",
+      "name": "Conduta: Antitérmico e hidratação oral",
+      "priority": 10,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "desidratação",
+          "operator": "=",
+          "value": "nao"
+        },
+        {
+          "attribute": "saturacao_o2",
+          "operator": ">=",
+          "value": "95"
+        }
+      ],
+      "conclusion": {
+        "attribute": "conduta_triagem",
+        "value": "Antitérmico (dipirona/paracetamol) + hidratação oral + repouso",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R30",
+      "name": "Conduta: SRO para diarreia",
+      "priority": 11,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "diarreia",
+          "operator": "!=",
+          "value": "nao"
+        },
+        {
+          "attribute": "desidratação",
+          "operator": "=",
+          "value": "leve"
+        }
+      ],
+      "conclusion": {
+        "attribute": "conduta_triagem",
+        "value": "Soro de reidratação oral (SRO) + orientação dietética",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R31",
+      "name": "Conduta: SF IV para desidratação moderada",
+      "priority": 14,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "desidratação",
+          "operator": "=",
+          "value": "moderada"
+        }
+      ],
+      "conclusion": {
+        "attribute": "conduta_triagem",
+        "value": "Hidratação venosa com SF 0,9% + coleta de exames + acesso venoso",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R32",
+      "name": "Conduta: Anti-hipertensivo urgência",
+      "priority": 16,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "pressao_sistolica",
+          "operator": ">",
+          "value": "180"
+        },
+        {
+          "attribute": "nivel_consciencia",
+          "operator": "=",
+          "value": "alerta"
+        }
+      ],
+      "conclusion": {
+        "attribute": "conduta_triagem",
+        "value": "Captopril 25mg SL ou Nitrendipina + monitorização + ECG",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R33",
+      "name": "Conduta: Nebulização para asma",
+      "priority": 14,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "chiado_peito",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "falta_ar",
+          "operator": "!=",
+          "value": "nao"
+        }
+      ],
+      "conclusion": {
+        "attribute": "conduta_triagem",
+        "value": "Nebulização com salbutamol + corticoide sistêmico + oximetria contínua",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R34",
+      "name": "Encaminhamento: Sala de Emergência",
+      "priority": 20,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "nivel_consciencia",
+          "operator": "!=",
+          "value": "alerta"
+        }
+      ],
+      "conclusion": {
+        "attribute": "encaminhamento",
+        "value": "SALA DE EMERGÊNCIA — atendimento imediato",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R35",
+      "name": "Encaminhamento: Sala de Emergência — SpO2",
+      "priority": 20,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "saturacao_o2",
+          "operator": "<",
+          "value": "90"
+        }
+      ],
+      "conclusion": {
+        "attribute": "encaminhamento",
+        "value": "SALA DE EMERGÊNCIA — insuficiência respiratória",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R36",
+      "name": "Encaminhamento: Consultório médico urgente",
+      "priority": 14,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "prostração",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "encaminhamento",
+        "value": "CONSULTÓRIO MÉDICO — prioridade amarela",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R37",
+      "name": "Encaminhamento: Sala de hidratação",
+      "priority": 13,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "desidratação",
+          "operator": "=",
+          "value": "moderada"
+        },
+        {
+          "attribute": "diarreia",
+          "operator": "!=",
+          "value": "nao"
+        }
+      ],
+      "conclusion": {
+        "attribute": "encaminhamento",
+        "value": "SALA DE HIDRATAÇÃO — reidratação venosa supervisionada",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R38",
+      "name": "Encaminhamento: Consultório verde",
+      "priority": 8,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "nao"
+        },
+        {
+          "attribute": "falta_ar",
+          "operator": "=",
+          "value": "nao"
+        },
+        {
+          "attribute": "desidratação",
+          "operator": "=",
+          "value": "nao"
+        }
+      ],
+      "conclusion": {
+        "attribute": "encaminhamento",
+        "value": "CONSULTÓRIO MÉDICO — fila verde (aguardar)",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R39",
+      "name": "Orientação: Isolamento respiratório",
+      "priority": 12,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "tosse",
+          "operator": "!=",
+          "value": "nao"
+        },
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "orientacao_paciente",
+        "value": "Use máscara; mantenha distância de outros; informe ao médico sintomas há quantos dias",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R40",
+      "name": "Orientação: Hidratação e dieta",
+      "priority": 10,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "diarreia",
+          "operator": "!=",
+          "value": "nao"
+        },
+        {
+          "attribute": "náusea_vomito",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "orientacao_paciente",
+        "value": "Ingerir SRO aos poucos; evitar alimentos sólidos até melhora; não tomar antidiarreico sem prescrição",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R41",
+      "name": "Orientação: Retorno imediato",
+      "priority": 15,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "criança_menor_5",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "orientacao_paciente",
+        "value": "Criança menor de 5 anos com febre: prioridade. Retornar imediatamente se convulsão, recusa alimentar ou piora",
+        "cf": 1.0
+      }
+    },
+    {
+      "id": "R42",
+      "name": "Orientação: Idoso com febre",
+      "priority": 15,
+      "description": "",
+      "condition_operator": "AND",
+      "cf": 1.0,
+      "conditions": [
+        {
+          "attribute": "idoso_maior_60",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "orientacao_paciente",
+        "value": "Paciente idoso: maior risco de complicações. Acompanhante deve permanecer; monitorar nível de consciência",
+        "cf": 1.0
+      }
+    }
+  ],
+  "questions": {
+    "temperatura": "Qual a temperatura axilar do paciente (°C)? [ex: 37.8]",
+    "saturacao_o2": "Qual a saturação de O₂ (%)? [ex: 96]",
+    "pressao_sistolica": "Qual a pressão arterial sistólica (mmHg)? [ex: 140]",
+    "pressao_diastolica": "Qual a pressão arterial diastólica (mmHg)? [ex: 90]",
+    "frequencia_cardiaca": "Qual a frequência cardíaca (bpm)? [ex: 88]",
+    "frequencia_respiratoria": "Qual a frequência respiratória (irpm)? [ex: 18]",
+    "glicemia_capilar": "Qual a glicemia capilar (mg/dL)? [ex: 120]",
+    "febre": "O paciente tem febre (temperatura ≥ 37,8°C)?",
+    "tosse": "O paciente tem tosse?",
+    "dor_garganta": "Há dor de garganta?",
+    "coriza": "Há coriza ou obstrução nasal?",
+    "dor_cabeca": "Há cefaleia (dor de cabeça)?",
+    "dor_corpo": "Há mialgia (dor no corpo)?",
+    "prostração": "Há prostração intensa / cansaço extremo?",
+    "falta_ar": "Há dispneia (falta de ar)?",
+    "chiado_peito": "Há sibilância (chiado no peito)?",
+    "dor_toracica": "Há dor torácica?",
+    "náusea_vomito": "Há náusea ou vômito?",
+    "diarreia": "Há diarreia? Quantas evacuações nas últimas 24h?",
+    "sangue_fezes": "Há sangue nas fezes (hematoquezia)?",
+    "dor_abdominal": "Há dor abdominal?",
+    "desidratação": "Há sinais de desidratação (boca seca, olhos fundos, sem urina)?",
+    "dor_lombar_flanco": "Há dor lombar ou em flanco?",
+    "disuria": "Há ardência/dor ao urinar (disúria)?",
+    "polaciuria": "Há aumento da frequência urinária (polaciúria)?",
+    "urina_turva": "A urina está turva ou com odor fétido?",
+    "dor_olhos": "Há dor retroocular (atrás dos olhos)?",
+    "manchas_pele": "Há manchas/exantema na pele?",
+    "sangramento_espontaneo": "Há sangramento espontâneo (gengiva, nariz, pele)?",
+    "dor_articular": "Há artralgia/arthrite (dor nas articulações)?",
+    "amigdalas_exsudato": "Há exsudato (pus) nas amígdalas?",
+    "rigidez_nuca": "Há rigidez de nuca?",
+    "nivel_consciencia": "Qual o nível de consciência do paciente?",
+    "historico_hipertensao": "O paciente tem diagnóstico prévio de hipertensão arterial?",
+    "historico_asma": "O paciente tem diagnóstico de asma ou DPOC?",
+    "uso_broncodilatador": "Já usou broncodilatador hoje sem melhora?",
+    "gravidez": "A paciente está grávida ou pode estar grávida?",
+    "criança_menor_5": "O paciente é criança menor de 5 anos?",
+    "idoso_maior_60": "O paciente tem mais de 60 anos?",
+    "contato_dengue": "Há relato de contato com casos de dengue ou mora em área endêmica?"
+  },
+  "answer_options": {
+    "febre": [
+      "sim",
+      "nao"
+    ],
+    "tosse": [
+      "sim",
+      "seca",
+      "produtiva",
+      "nao"
+    ],
+    "dor_garganta": [
+      "sim",
+      "nao"
+    ],
+    "coriza": [
+      "sim",
+      "nao"
+    ],
+    "dor_cabeca": [
+      "sim",
+      "nao"
+    ],
+    "dor_corpo": [
+      "sim",
+      "nao"
+    ],
+    "prostração": [
+      "sim",
+      "nao"
+    ],
+    "falta_ar": [
+      "sim",
+      "moderada",
+      "grave",
+      "nao"
+    ],
+    "chiado_peito": [
+      "sim",
+      "nao"
+    ],
+    "dor_toracica": [
+      "sim",
+      "nao"
+    ],
+    "náusea_vomito": [
+      "sim",
+      "nao"
+    ],
+    "diarreia": [
+      "nao",
+      "1-3",
+      "4-6",
+      "mais_de_6"
+    ],
+    "sangue_fezes": [
+      "sim",
+      "nao"
+    ],
+    "dor_abdominal": [
+      "sim",
+      "cólica",
+      "difusa",
+      "nao"
+    ],
+    "desidratação": [
+      "nao",
+      "leve",
+      "moderada",
+      "grave"
+    ],
+    "dor_lombar_flanco": [
+      "sim",
+      "nao"
+    ],
+    "disuria": [
+      "sim",
+      "nao"
+    ],
+    "polaciuria": [
+      "sim",
+      "nao"
+    ],
+    "urina_turva": [
+      "sim",
+      "nao"
+    ],
+    "dor_olhos": [
+      "sim",
+      "nao"
+    ],
+    "manchas_pele": [
+      "sim",
+      "petequias",
+      "maculopapular",
+      "nao"
+    ],
+    "sangramento_espontaneo": [
+      "sim",
+      "nao"
+    ],
+    "dor_articular": [
+      "sim",
+      "nao"
+    ],
+    "amigdalas_exsudato": [
+      "sim",
+      "nao"
+    ],
+    "rigidez_nuca": [
+      "sim",
+      "nao"
+    ],
+    "nivel_consciencia": [
+      "alerta",
+      "confuso",
+      "sonolento",
+      "inconsciente"
+    ],
+    "historico_hipertensao": [
+      "sim",
+      "nao"
+    ],
+    "historico_asma": [
+      "sim",
+      "nao"
+    ],
+    "uso_broncodilatador": [
+      "sim",
+      "nao"
+    ],
+    "gravidez": [
+      "sim",
+      "nao",
+      "nao_aplicavel"
+    ],
+    "criança_menor_5": [
+      "sim",
+      "nao"
+    ],
+    "idoso_maior_60": [
+      "sim",
+      "nao"
+    ],
+    "contato_dengue": [
+      "sim",
+      "nao"
+    ]
+  },
+  "attribute_ranges": {
+    "temperatura": [
+      30.0,
+      45.0
+    ],
+    "saturacao_o2": [
+      0.0,
+      100.0
+    ],
+    "pressao_sistolica": [
+      20.0,
+      300.0
+    ],
+    "pressao_diastolica": [
+      10.0,
+      200.0
+    ],
+    "frequencia_cardiaca": [
+      10.0,
+      300.0
+    ],
+    "frequencia_respiratoria": [
+      2.0,
+      80.0
+    ],
+    "glicemia_capilar": [
+      10.0,
+      1000.0
+    ]
+  }
+}

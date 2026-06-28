@@ -1,0 +1,188 @@
+{
+    "domain": "diagnostico_automotivo",
+    "description": "Diagnóstico Automotivo.",
+    "hypotheses": [
+        "problema"
+    ],
+    "initial_facts": [],
+    "rules": [
+        {
+            "id": "R1",
+            "name": "Problema na Bateria",
+            "priority": 1,
+            "description": "Se as luzes do painel estão apagadas, então o problema é bateria descarregada.",
+            "condition_operator": "AND",
+            "cf": 1,
+            "conditions": [
+                {
+                    "attribute": "luzes_painel",
+                    "operator": "=",
+                    "value": "apagadas"
+                }
+            ],
+            "conclusion": {
+                "attribute": "problema",
+                "value": "bateria_descarregada",
+                "cf": 1
+            }
+        },
+        {
+            "id": "R2",
+            "name": "Problema no Motor de Partida",
+            "priority": 1,
+            "description": "Se o motor não gira e as luzes do painel estão normais, então o problema é motor de partida danificado.",
+            "condition_operator": "AND",
+            "cf": 1,
+            "conditions": [
+                {
+                    "attribute": "motor_gira",
+                    "operator": "=",
+                    "value": "nao"
+                },
+                {
+                    "attribute": "luzes_painel",
+                    "operator": "=",
+                    "value": "normais"
+                }
+            ],
+            "conclusion": {
+                "attribute": "problema",
+                "value": "motor_partida_danificado",
+                "cf": 1
+            }
+        },
+        {
+            "id": "R3",
+            "name": "Superaquecimento Motor",
+            "priority": 1,
+            "description": "Se a temperatura do motor for maior que 90, então o problema é superaquecimento do motor.",
+            "condition_operator": "AND",
+            "cf": 1,
+            "conditions": [
+                {
+                    "attribute": "temperatura_motor",
+                    "operator": ">",
+                    "value": "90"
+                }
+            ],
+            "conclusion": {
+                "attribute": "problema",
+                "value": "superaquecimento_motor",
+                "cf": 1
+            }
+        },
+        {
+            "id": "R4",
+            "name": "Aquecimento Moderado",
+            "priority": 1,
+            "description": "Se a temperatura do motor estiver entre 70 e 90 inclusive, então o problema é aquecimento moderado.",
+            "condition_operator": "AND",
+            "cf": 1,
+            "conditions": [
+                {
+                    "attribute": "temperatura_motor",
+                    "operator": ">=",
+                    "value": "70"
+                },
+                {
+                    "attribute": "temperatura_motor",
+                    "operator": "<=",
+                    "value": "90"
+                }
+            ],
+            "conclusion": {
+                "attribute": "problema",
+                "value": "aquecimento_moderado",
+                "cf": 1
+            }
+        },
+        {
+            "id": "R5",
+            "name": "Temperatura Normal",
+            "priority": 1,
+            "description": "Se a temperatura do motor for menor que 70, então o problema é temperatura normal.",
+            "condition_operator": "AND",
+            "cf": 1,
+            "conditions": [
+                {
+                    "attribute": "temperatura_motor",
+                    "operator": "<",
+                    "value": "70"
+                }
+            ],
+            "conclusion": {
+                "attribute": "problema",
+                "value": "temperatura_normal",
+                "cf": 1
+            }
+        },
+        {
+            "id": "R6",
+            "name": "Emergência por Alta Temperatura e Direção Dura",
+            "priority": 1,
+            "description": "Se a temperatura do motor for maior que 110 e a direção estiver dura, então o problema é emergência.",
+            "condition_operator": "AND",
+            "cf": 1,
+            "conditions": [
+                {
+                    "attribute": "temperatura_motor",
+                    "operator": ">",
+                    "value": "110"
+                },
+                {
+                    "attribute": "direcao_dura",
+                    "operator": "=",
+                    "value": "sim"
+                }
+            ],
+            "conclusion": {
+                "attribute": "problema",
+                "value": "emergencia",
+                "cf": 1
+            }
+        },
+        {
+            "id": "R7",
+            "name": "Falta de Óleo",
+            "priority": 1,
+            "description": "Detecta falta de óleo no motor quando o nível está baixo",
+            "condition_operator": "AND",
+            "cf": 1,
+            "conditions": [
+                {
+                    "attribute": "oleo_motor",
+                    "operator": "=",
+                    "value": "baixo"
+                }
+            ],
+            "conclusion": {
+                "attribute": "problema",
+                "value": "falta_oleo",
+                "cf": 1
+            }
+        }
+    ],
+    "questions": {
+        "luzes_painel": "Qual o estado das luzes do painel?",
+        "motor_gira": "O motor está girando?",
+        "temperatura_motor": "Qual a temperatura do motor?",
+        "falta_oleo": "Qual o nível de falta de óleo?"
+    },
+    "answer_options": {
+        "luzes_painel": [
+            "normais",
+            "fracas",
+            "apagadas"
+        ],
+        "motor_gira": [
+            "sim",
+            "nao"
+        ],
+        "falta_oleo": [
+            "baixo",
+            "médio",
+            "alto"
+        ]
+    },
+    "attribute_ranges": {}
+}

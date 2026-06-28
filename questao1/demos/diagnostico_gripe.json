@@ -1,0 +1,196 @@
+{
+  "domain": "diagnostico_gripe",
+  "description": "Diferenciação entre gripe, resfriado e dengue",
+  "hypotheses": [
+    "suspeita_diagnostica"
+  ],
+  "initial_facts": [],
+  "rules": [
+    {
+      "id": "R01",
+      "name": "Resfriado Comum",
+      "priority": 5,
+      "description": "Se coriza = sim e febre = nao e tosse = sim então suspeita_diagnostica = Resfriado Comum",
+      "conditions": [
+        {
+          "attribute": "coriza",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "nao"
+        },
+        {
+          "attribute": "tosse",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "suspeita_diagnostica",
+        "value": "Resfriado Comum"
+      }
+    },
+    {
+      "id": "R02",
+      "name": "Gripe Influenza",
+      "priority": 8,
+      "description": "Se febre = sim e tosse = sim e dor_corpo = sim e inicio_sintomas = subito então suspeita_diagnostica = Gripe (Influenza)",
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "tosse",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "dor_corpo",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "inicio_sintomas",
+          "operator": "=",
+          "value": "subito"
+        }
+      ],
+      "conclusion": {
+        "attribute": "suspeita_diagnostica",
+        "value": "Gripe (Influenza)"
+      }
+    },
+    {
+      "id": "R03",
+      "name": "Gripe com Febre Alta",
+      "priority": 10,
+      "description": "Se febre = sim e temperatura > 39 e dor_corpo = sim então suspeita_diagnostica = Gripe com Febre Alta — avaliar oseltamivir",
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "temperatura",
+          "operator": ">",
+          "value": "39"
+        },
+        {
+          "attribute": "dor_corpo",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "suspeita_diagnostica",
+        "value": "Gripe com Febre Alta — avaliar oseltamivir"
+      }
+    },
+    {
+      "id": "R04",
+      "name": "Dengue Clássica",
+      "priority": 12,
+      "description": "Se febre = sim e dor_corpo = sim e dor_olhos = sim então suspeita_diagnostica = Dengue — solicitar NS1/hemograma",
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "dor_corpo",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "dor_olhos",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "suspeita_diagnostica",
+        "value": "Dengue — solicitar NS1/hemograma"
+      }
+    },
+    {
+      "id": "R05",
+      "name": "Dengue com Sinais de Alarme",
+      "priority": 15,
+      "description": "Se febre = sim e manchas_pele = sim e dor_corpo = sim então suspeita_diagnostica = Dengue Grave — internação urgente",
+      "conditions": [
+        {
+          "attribute": "febre",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "manchas_pele",
+          "operator": "=",
+          "value": "sim"
+        },
+        {
+          "attribute": "dor_corpo",
+          "operator": "=",
+          "value": "sim"
+        }
+      ],
+      "conclusion": {
+        "attribute": "suspeita_diagnostica",
+        "value": "Dengue Grave — internação urgente"
+      }
+    }
+  ],
+  "questions": {
+    "febre": "O paciente tem febre?",
+    "temperatura": "Qual a temperatura (°C)?",
+    "tosse": "Há tosse?",
+    "coriza": "Há coriza (nariz escorrendo)?",
+    "dor_corpo": "Há dor no corpo / mialgia?",
+    "inicio_sintomas": "Como foi o início dos sintomas?",
+    "dor_olhos": "Há dor atrás dos olhos?",
+    "manchas_pele": "Há manchas ou erupções na pele?"
+  },
+  "answer_options": {
+    "febre": [
+      "sim",
+      "nao"
+    ],
+    "tosse": [
+      "sim",
+      "nao"
+    ],
+    "coriza": [
+      "sim",
+      "nao"
+    ],
+    "dor_corpo": [
+      "sim",
+      "nao"
+    ],
+    "inicio_sintomas": [
+      "gradual",
+      "subito"
+    ],
+    "dor_olhos": [
+      "sim",
+      "nao"
+    ],
+    "manchas_pele": [
+      "sim",
+      "nao"
+    ]
+  },
+  "attribute_ranges": {
+    "temperatura": [
+      30.0,
+      45.0
+    ]
+  }
+}

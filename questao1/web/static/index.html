@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-RuleShell — Sistema Especialista Genérico</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="header-logo">
+                <span class="logo-accent">K-</span>RuleShell
+                <span class="logo-sub">Knowledge & Inference Console</span>
+            </div>
+            
+            <div class="kb-actions">
+                <!-- Grupo 1: Seleção e Carregamento -->
+                <div class="kb-action-group">
+                    <div class="select-wrapper" style="border: none; margin: 0;">
+                        <select id="kb-select" style="border: none; background: transparent; padding-right: 20px; font-size: 13px;">
+                            <option value="">Carregando bases...</option>
+                        </select>
+                    </div>
+                    <button id="btn-load-kb" class="btn" style="border-left: 1px solid var(--border-color); border-radius: 0; padding: 6px 12px;">Carregar</button>
+                </div>
+                
+                <!-- Grupo 2: Ações de Arquivo (Criar, Importar, Exportar) -->
+                <div class="kb-action-group">
+                    <button id="btn-new-kb" class="btn">Nova Base</button>
+                    <label for="kb-upload-input" class="btn upload-label" style="display: inline-flex; align-items: center; cursor: pointer; margin: 0; padding: 6px 12px; height: 100%;">
+                        Importar JSON
+                        <input type="file" id="kb-upload-input" accept=".json" style="display: none;">
+                    </label>
+                    <button id="btn-download-kb" class="btn btn-primary" style="border-radius: var(--radius-sm);">Baixar JSON</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <div class="main-layout">
+            <!-- SIDEBAR: KB METADATA -->
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h3>Base de Conhecimento</h3>
+                    <div class="kb-meta-card">
+                        <div class="meta-item">
+                            <span class="meta-label">Domínio:</span>
+                            <span id="meta-domain" class="meta-value">-</span>
+                        </div>
+                        <div class="meta-item desc-item">
+                            <span class="meta-label">Descrição:</span>
+                            <span id="meta-desc" class="meta-value">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Hipóteses Alvo</h3>
+                    <ul id="hypotheses-list" class="badge-list">
+                        <li>Nenhuma hipótese carregada</li>
+                    </ul>
+                    <div class="form-row" style="margin-top: 10px; gap: 6px;">
+                        <input type="text" id="input-new-hypothesis" placeholder="Ex: suspeita_diagnostica" style="padding: 4px 8px; font-size:12px;">
+                        <button id="btn-add-hypothesis" class="btn btn-secondary btn-small" style="padding: 4px 8px;">+ Adicionar</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section scrollable">
+                    <div class="section-header">
+                        <h3>Regras Cadastradas</h3>
+                        <span id="rules-count" class="counter-badge">0</span>
+                    </div>
+                    <div id="rules-list-container" class="rules-list">
+                        <!-- Rules populated dynamically -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- WORKSPACE -->
+            <main class="workspace">
+                <!-- TABS -->
+                <nav class="tab-nav">
+                    <button class="tab-btn active" data-tab="tab-consultation">Consultar Diagnóstico</button>
+                    <button class="tab-btn" data-tab="tab-manager">Gerenciar Base</button>
+                </nav>
+
+                <div class="tab-content-wrapper">
+                    <!-- TAB 1: CONSULTATION -->
+                    <section id="tab-consultation" class="tab-pane active">
+                        <div class="consultation-setup card">
+                            <h3>Iniciar Nova Sessão</h3>
+                            <p class="section-desc">Escolha uma estratégia de inferência para iniciar o diagnóstico.</p>
+                            
+                            <div class="setup-controls">
+                                <div class="form-group">
+                                    <label for="inference-mode">Estratégia:</label>
+                                    <select id="inference-mode">
+                                        <option value="hybrid">Híbrida (Backward + Forward com perguntas)</option>
+                                        <option value="forward">Encadeamento para Frente (Apenas fatos iniciais)</option>
+                                        <option value="backward">Encadeamento para Trás (Provar objetivo específico)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group" id="target-goal-wrapper" style="display: none;">
+                                    <label for="target-goal">Objetivo Alvo:</label>
+                                    <select id="target-goal">
+                                        <!-- Populated with hypotheses -->
+                                    </select>
+                                </div>
+                                
+                                <div id="initial-facts-setup" style="display: none; width: 100%; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; margin-bottom: 15px;">
+                                    <h4 style="font-size: 13px; font-weight:600; margin-bottom: 8px; color: var(--accent);">Inserir Fatos Iniciais (Entradas)</h4>
+                                    <p class="section-desc" style="margin-bottom: 12px;">Forneça os fatos conhecidos para propagação do encadeamento.</p>
+                                    <div id="initial-facts-fields" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-height: 250px; overflow-y: auto; padding-right: 5px;">
+                                        <!-- Dynamically generated fields -->
+                                    </div>
+                                </div>
+                                
+                                <button id="btn-start-session" class="btn btn-primary btn-large">Iniciar Consulta</button>
+                            </div>
+                        </div>
+
+                        <div class="consultation-active" style="display: none;">
+                            <div class="split-pane">
+                                <!-- Question and input pane -->
+                                <div class="interaction-pane card">
+                                    <div class="pane-header">
+                                        <span class="session-badge">Sessão Ativa</span>
+                                        <button id="btn-reset-session" class="btn btn-danger btn-small">Reiniciar</button>
+                                    </div>
+                                    
+                                    <div id="question-box" class="question-box">
+                                        <h2 id="question-text">Pergunta...</h2>
+                                        <div id="input-container" class="input-container">
+                                            <!-- Dynamic input controls (options buttons, selects or text inputs) -->
+                                        </div>
+                                        <div id="validation-error" class="error-msg" style="display: none;">
+                                            Erro de validação
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="action-footer">
+                                        <button id="btn-submit-answer" class="btn btn-primary">Enviar Resposta</button>
+                                        <button id="btn-why" class="btn btn-secondary">Por que esta pergunta?</button>
+                                    </div>
+                                </div>
+
+                                <!-- Live facts list -->
+                                <div class="facts-pane card">
+                                    <h3>Memória de Trabalho (Fatos)</h3>
+                                    <p class="section-desc">Fatos coletados ou deduzidos nesta sessão.</p>
+                                    <div class="facts-table-wrapper">
+                                        <table class="facts-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Atributo</th>
+                                                    <th>Valor</th>
+                                                    <th>Origem</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="facts-table-body">
+                                                <!-- Facts dynamically populated -->
+                                            </tbody>
+                                        </table>
+                                        <div id="no-facts-msg" class="empty-state">
+                                            Nenhum fato coletado ainda.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Explanations container -->
+                            <div id="explanation-box" class="explanation-box card" style="display: none;">
+                                <div class="pane-header">
+                                    <h3>Explicação do Raciocínio</h3>
+                                    <button id="btn-close-explanation" class="close-btn">&times;</button>
+                                </div>
+                                <div class="explanation-tabs">
+                                    <button class="exp-tab-btn active" data-exp-type="natural">Linguagem Natural (IA)</button>
+                                    <button class="exp-tab-btn" data-exp-type="structured">Lógica Estruturada (Sistema)</button>
+                                </div>
+                                <div class="explanation-content">
+                                    <div id="explanation-natural" class="exp-pane active">
+                                        Carregando explicação simplificada...
+                                    </div>
+                                    <div id="explanation-structured" class="exp-pane structured-code">
+                                        Carregando rastreio formal...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RESULTS DISPLAY -->
+                        <div class="consultation-results card" style="display: none;">
+                            <div class="pane-header">
+                                <h2>Conclusão do Diagnóstico</h2>
+                                <button id="btn-restart-from-results" class="btn btn-primary">Nova Consulta</button>
+                            </div>
+                            
+                            <div class="results-grid" id="results-container">
+                                <!-- Results populated dynamically -->
+                            </div>
+                            
+                            <div class="results-explanation card">
+                                <h3>Como o sistema chegou a esse diagnóstico?</h3>
+                                <p class="section-desc">Selecione uma hipótese acima para ver o caminho lógico percorrido.</p>
+                                <div id="how-explanation-content" class="explanation-content-box">
+                                    <!-- How explanation populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- TAB 2: MANAGER -->
+                    <section id="tab-manager" class="tab-pane">
+                        <div class="manager-layout">
+                            <!-- Left: Manage Rules -->
+                            <div class="manager-card card">
+                                <h3>Gerenciador de Regras</h3>
+                                <p class="section-desc">Crie ou edite regras de produção SE-ENTÃO de forma estruturada.</p>
+                                
+                                <form id="form-rule" class="manager-form">
+                                    <div class="form-row">
+                                        <div class="form-group flex-1">
+                                            <label for="rule-id">ID da Regra:</label>
+                                            <input type="text" id="rule-id" placeholder="Ex: R4" required>
+                                        </div>
+                                        <div class="form-group flex-2">
+                                            <label for="rule-name">Nome da Regra:</label>
+                                            <input type="text" id="rule-name" placeholder="Ex: Febre Alta" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group flex-2">
+                                            <label for="rule-desc">Descrição / Justificativa:</label>
+                                            <input type="text" id="rule-desc" placeholder="Ex: Identifica febre acima do normal">
+                                        </div>
+                                        <div class="form-group flex-1">
+                                            <label for="rule-priority">Prioridade:</label>
+                                            <input type="number" id="rule-priority" value="0">
+                                        </div>
+                                        <div class="form-group flex-1">
+                                            <label for="rule-cf">Confiança (CF):</label>
+                                            <input type="number" id="rule-cf" min="0" max="1" step="0.05" value="1.0" placeholder="Ex: 0.8">
+                                        </div>
+                                    </div>
+
+                                    <div class="rule-conditions-section">
+                                        <div class="section-header">
+                                            <h4>Condições (SE)</h4>
+                                            <select id="rule-operator" style="display: none;">
+                                                <option value="AND">AND</option>
+                                                <option value="OR">OR</option>
+                                            </select>
+                                            <button type="button" id="btn-add-condition" class="btn btn-secondary btn-small">+ Condição</button>
+                                        </div>
+                                        <div id="rule-conditions-list" class="form-list">
+                                            <!-- Dynamically added conditions -->
+                                        </div>
+                                    </div>
+
+                                    <div class="rule-conclusion-section">
+                                        <h4>Conclusão (ENTÃO)</h4>
+                                        <div class="form-row">
+                                            <div class="form-group flex-2">
+                                                <label>Atributo Concluído:</label>
+                                                <input type="text" class="rule-conclusion-attr" placeholder="Ex: suspeita_diagnostica" required>
+                                            </div>
+                                            <div class="form-group flex-2">
+                                                <label>Valor Concluído:</label>
+                                                <input type="text" class="rule-conclusion-val" placeholder="Ex: Gripe" required>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary btn-large">Salvar Regra na Base</button>
+                                </form>
+                            </div>
+
+                            <!-- Right: Manage Questions -->
+                            <div class="manager-card card">
+                                <h3>Gerenciador de Perguntas e Limites</h3>
+                                <p class="section-desc">Cadastre como o sistema deve perguntar sobre cada atributo e suas restrições.</p>
+                                
+                                <form id="form-question" class="manager-form">
+                                    <div class="form-group">
+                                        <label for="q-attribute">Nome do Atributo:</label>
+                                        <input type="text" id="q-attribute" placeholder="Ex: temperatura" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="q-text">Pergunta ao Usuário:</label>
+                                        <input type="text" id="q-text" placeholder="Ex: Qual a temperatura (°C)?" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="q-options">Opções de Resposta (separadas por vírgula):</label>
+                                        <input type="text" id="q-options" placeholder="Ex: sim, nao (Deixe vazio para resposta livre)">
+                                    </div>
+
+                                    <div class="form-row" id="range-row">
+                                        <div class="form-group flex-1">
+                                            <label for="q-min">Limite Mínimo (Livre):</label>
+                                            <input type="number" step="any" id="q-min" placeholder="Ex: 30">
+                                        </div>
+                                        <div class="form-group flex-1">
+                                            <label for="q-max">Limite Máximo (Livre):</label>
+                                            <input type="number" step="any" id="q-max" placeholder="Ex: 45">
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary btn-large">Registrar Pergunta</button>
+                                </form>
+
+                                <!-- List of Registered Questions -->
+                                <div class="questions-list-section" style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 18px;">
+                                    <h4 style="margin-bottom: 12px; font-size: 13px; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px;">Perguntas Cadastradas</h4>
+                                    <div id="questions-list-container" class="form-list" style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                                        <!-- Dynamically populated questions list -->
+                                    </div>
+                                </div>
+
+                                <!-- IA ASSISTANT SUBSECTION -->
+                                <div class="ia-assistant-card">
+                                    <div class="ia-header">
+                                        <span class="ia-badge">Assistente IA</span>
+                                        <h4>Cadastrar em Lote via Linguagem Natural</h4>
+                                    </div>
+                                    <p class="section-desc">Descreva regras ou perguntas e o assistente estruturará tudo automaticamente.</p>
+                                    
+                                    <div class="form-group">
+                                        <select id="ia-target-mode">
+                                            <option value="rules">Estruturar Regra(s)</option>
+                                            <option value="questions">Estruturar Pergunta(s)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <textarea id="ia-input-text" rows="3" placeholder="Ex: adicione as regras R20 e R21 para diagnosticar resfriado quando houver tosse e coriza sem febre..."></textarea>
+                                    </div>
+                                    
+                                    <button id="btn-ia-generate" class="btn btn-primary btn-large">Processar com IA</button>
+                                    
+                                    <!-- IA Preview & Confirm Area -->
+                                    <div id="ia-preview-box" class="ia-preview-box" style="display: none;">
+                                        <h5>Visualização da Estrutura Gerada:</h5>
+                                        <pre id="ia-preview-content" class="structured-code"></pre>
+                                        <div class="action-footer">
+                                            <button id="btn-ia-confirm" class="btn btn-primary">Confirmar e Cadastrar</button>
+                                            <button id="btn-ia-discard" class="btn btn-secondary">Descartar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL: NOVA BASE -->
+    <div id="modal-new-kb" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Criar Nova Base de Conhecimento</h3>
+                <button id="btn-close-new-kb-modal" class="close-btn" style="background: none; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="new-kb-domain" style="font-weight: 500; font-size: 13px; color: var(--text-muted);">Domínio da Base (Sem espaços ou caracteres especiais):</label>
+                    <input type="text" id="new-kb-domain" placeholder="Ex: diagnostico_plantas" style="width: 100%; padding: 8px 12px; border-radius: var(--radius-md); background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); outline: none;" required>
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px; margin-top: 15px;">
+                    <label for="new-kb-desc" style="font-weight: 500; font-size: 13px; color: var(--text-muted);">Descrição da Base (Opcional):</label>
+                    <textarea id="new-kb-desc" rows="3" placeholder="Ex: Regras para diagnosticar pragas comuns" style="width: 100%; padding: 8px 12px; border-radius: var(--radius-md); background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); outline: none; resize: vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                <button id="btn-cancel-new-kb" class="btn btn-secondary" style="padding: 8px 16px;">Cancelar</button>
+                <button id="btn-confirm-new-kb" class="btn btn-primary" style="padding: 8px 16px;">Criar Base</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Notification toast -->
+    <div id="toast" class="toast" style="display: none;">Mensagem</div>
+
+    <!-- Static JS -->
+    <script src="app.js"></script>
+</body>
+</html>
