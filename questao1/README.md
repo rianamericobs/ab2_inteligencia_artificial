@@ -20,6 +20,16 @@ Uma shell genérica e moderna para construção de **Sistemas Baseados em Conhec
 Instale as dependências necessárias:
 ```bash
 pip install -r requirements.txt
+
+Adicione a raiz do projeto um arquivo .env com a seguinte chave:
+GROQ_API_KEY="sua_chave_aqui"
+Ou
+API_KEY="sua_chave_aqui"
+```
+
+```bash
+# Navegue até a raiz do projeto:
+cd questao1
 ```
 
 ### 1. Interface Web (FastAPI + Dashboard)
