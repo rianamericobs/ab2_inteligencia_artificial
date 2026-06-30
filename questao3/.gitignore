@@ -1,9 +1,16 @@
-chaveAPI.py
+# Ignorar ficheiros de credenciais do Firebase
+projetorefatorado-firebase-adminsdk-fbsvc-d9be3a5d92.json
 
-.venv/
+mudanças.txt
+
+.env
+
+mudanças.txt
 
 __pycache__
 
-requirements.txt
+criacionais/chave.py
 
-backend/__pycache__
+evento.spec
+
+

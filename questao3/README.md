@@ -1,126 +1,128 @@
-# ✈️ FlightBot — Assistente de Voo com IA
+## Créditos e Autoria
 
-Sistema de assistência de voo baseado em agentes LLM usando o **Google Gemini** (API gratuita).
+Este projeto foi desenvolvido em duas fases distintas, com contribuições fundamentais de diferentes autores:
 
-## 🏗️ Arquitetura
+### Projeto Original
 
-```
-flight-assistant/
-├── backend/
-│   ├── agents.py       # Agentes LLM + ferramentas (function calling Gemini)
-│   └── server.py       # API REST com FastAPI
-├── frontend/
-│   └── index.html      # Interface web
-├── setup.py            # Script de configuração e inicialização
-├── requirements.txt    # Dependências Python
-└── README.md
-```
+* **Autora:** Eliane Lais de Melo Bastos
+* **Git:** LaisMelo22
+* **Contribuição:** Concepção e implementação inicial das funcionalidades principais do sistema de gestão de eventos, como parte da disciplina de Projeto de Software.
 
-## 🤖 Agentes e Ferramentas
+### Refatoração e Arquitetura de Software
 
-O sistema usa **Gemini 1.5 Flash** (gratuito) com **8 ferramentas especializadas**:
+* **Autor:** Vítor Gabriel dos Santos Oliveira
+* **Git:** VtrGbr
+* **Contribuição:** Responsável pela refatoração do projeto, migração para o Firebase Realtime Database e pela implementação de uma arquitetura avançada baseada nos seguintes padrões de projeto:
+    * **Criacionais:** Singleton, Factory Method, Builder.
+    * **Comportamentais:** State, Command, Observer.
+    * **Estruturais:** Facade, Decorator, Adapter.
 
-| Ferramenta | Descrição |
-|---|---|
-| `search_flights` | Busca voos entre aeroportos |
-| `get_flight_details` | Detalhes completos de um voo |
-| `make_reservation` | Realiza reservas |
-| `check_reservation` | Consulta reservas |
-| `cancel_reservation` | Cancela reservas |
-| `get_airport_info` | Informações de aeroportos |
-| `check_flight_status` | Status em tempo real do voo |
-| `get_baggage_rules` | Regras de bagagem por companhia |
+# Sistema de Gestão de Eventos
 
-## 🔑 Obter a chave de API (GRATUITA)
+Uma implementação em Python de um sistema de gestão de eventos, utilizando Firebase como base de dados e aplicando padrões de projeto de software para uma arquitetura robusta e escalável. 
+Este projeto foi originalmente desenvolvido pela aluna ELIANE LAIS DE MELO BASTOS da matéria Projeto de Software e após a troca dos projetos fiquei com este projeto e fiquei com a responsabilidade de implementar os padrões de projeto.
 
-1. Acesse **[aistudio.google.com/apikey](https://aistudio.google.com/apikey)**
-2. Faça login com sua conta Google
-3. Clique em **"Create API Key"**
-4. Copie a chave gerada
+## Funcionalidades Implementadas
 
-> O plano gratuito inclui 15 requisições/minuto e 1 milhão de tokens/dia com o Gemini 1.5 Flash — mais do que suficiente para uso normal.
+* **Gestão de Eventos:** Criação, cancelamento e listagem de eventos.
+* **Gestão de Participantes:** Adição de diferentes tipos de participantes (Regular, VIP, Estudante) com benefícios automáticos, listagem e remoção.
+* **Gestão de Locais:**  Adição, listagem e remoção de locais, com a capacidade de importar locais a partir de ficheiros CSV.
+* **Notificações:** Sistema de notificação (via Firebase) para o cancelamento de eventos.
+* **Gestão Financeira:** Definição de orçamento e registo de despesas por evento.
+* **Coordenação de Fornecedores:** Gestão completa de fornecedores, incluindo adição, listagem e atualização de status.
+* **Gestão de Palestrantes (Speakers):** Adição, listagem e remoção de palestrantes de um evento.
+* **Feedback e Pesquisas:** Criação de pesquisas e recolha de feedback dos participantes.
+* **Analisar por IA:** A inteligência artificial analisa os feedbacks e da uma resposta
 
-## 🚀 Como executar
+---
 
-### Passo 1 — Configurar a chave de API
+## Configuração e Instalação
 
-**Linux/macOS:**
-```bash
-export GEMINI_API_KEY="AIza..."
-```
+Para executar este projeto, são necessários alguns passos de configuração, principalmente para a ligação com a base de dados Firebase.
 
-**Windows (CMD):**
-```cmd
-set GEMINI_API_KEY=AIza...
-```
+### Pré-requisitos
 
-**Windows (PowerShell):**
-```powershell
-$env:GEMINI_API_KEY = "AIza..."
-```
+* Python 3.x
+* Conta Google para aceder ao Firebase
 
-### Passo 2 — Executar
+### 1. Clonar o Repositório
 
 ```bash
-python setup.py
+git clone [https://github.com/seu-usuario/seu-repositorio.git](https://github.com/seu-usuario/seu-repositorio.git) cd seu-repositorio 
 ```
 
-O script irá:
-1. Verificar o Python
-2. Instalar as dependências automaticamente
-3. Iniciar o servidor em `http://localhost:8000`
-4. Abrir o frontend no navegador
+#  Instalar dependências
+    Este projeto requer a biblioteca firebase-admin. Instale-a usando o pip:
 
-### Alternativa — Execução manual
+2. Instale as dependências:
+Certifique-se de instalar os pacotes necessários para o Firebase e para a nova inteligência artificial:
 
 ```bash
-pip install -r requirements.txt
-python backend/server.py
-# Abra frontend/index.html no navegador
+pip install firebase-admin google-genai
 ```
+3. Configure as Chaves de API:
+Firebase: Adicione o seu arquivo JSON de credenciais do Firebase na pasta adequada (conforme estruturado no firebaseServico).
 
-### Modo terminal (sem interface web)
+Google Gemini: No arquivo criacionais/llmServico.py, insira sua chave de API gerada no Google AI Studio na variável correspondente.
 
 ```bash
-python backend/agents.py
+pip install firebase-admin
 ```
 
-## 💬 Exemplos de uso
+# Configurar a Base de Dados Firebase
 
+O sistema utiliza o Firebase Realtime Database para armazenar todos os dados. Siga estes passos:
+
+1. Acesse o Console do Firebase e crie um novo projeto.
+
+2. No menu do projeto, vá para Build > Realtime Database e crie uma nova base de dados. Pode começar no modo de teste para permitir leituras e escritas.
+
+3. Vá para Configurações do Projeto (ícone de engrenagem) > Contas de serviço.
+
+4. Clique em "Gerar nova chave privada". Será feito o download de um ficheiro .json.
+
+5. **IMPORTANTE**: Renomeie este ficheiro para projetorefatorado-firebase-adminsdk-fbsvc-d9be3a5d92.json e coloque-o na pasta raiz do seu projeto. O ficheiro .gitignore já está configurado para impedir que este ficheiro sensível seja enviado para o GitHub.
+
+# Como Executar
+Após concluir a configuração, execute o ficheiro principal para iniciar o menu interativo:
+```bash
+python evento.py
 ```
-Você: Quero voos de GRU para BSB para amanhã, 2 passageiros
-Você: Quero reservar o voo LA3100 para João Silva, CPF 123.456.789-00
-Você: Consultar reserva BR123456
-Você: Status do voo G31234 hoje?
-Você: Regras de bagagem da GOL econômica
-Você: Informações sobre o aeroporto de Fortaleza
-Você: Cancelar reserva BR123456
-```
+# Arquitetura e Padrões de Projeto
+O projeto foi desenhado com uma arquitetura limpa, separando as responsabilidades em diferentes camadas e aplicando um conjunto completo de padrões de projeto para garantir um código flexível e de alta qualidade.
 
-## ⚙️ Customização
+Estrutura de Ficheiros
+O projeto está organizado da seguinte forma:
 
-### Trocar o modelo Gemini
+- criacionais/: Contém os padrões responsáveis pela criação de objetos (Singleton, Factory, Builder).
 
-Em `backend/agents.py`, linha do `GenerativeModel`:
+- comportamentais/: Contém os padrões que gerem a comunicação e o fluxo da aplicação (Command, Observer, State).
 
-```python
-# Opções gratuitas:
-model_name="gemini-1.5-flash"    # rápido, padrão
-model_name="gemini-1.5-flash-8b" # mais leve ainda
-model_name="gemini-1.5-pro"      # mais capaz (limite menor)
-```
+- estruturais/: Contém os padrões que lidam com a composição e a relação entre objetos (Decorator, Facade, Adapter).
 
-### Adicionar novos voos
+- sistemaEvento.py: O coração do sistema, contendo a lógica de negócio principal.
 
-Em `backend/agents.py`, edite o dicionário `FLIGHTS_DB`.
+- evento.py: O ponto de entrada da aplicação, responsável por iniciar a Facade.
 
-### Endpoints da API
+### Padrões de projeto utilizados
 
-| Método | Endpoint | Descrição |
-|---|---|---|
-| `GET` | `/` | Status |
-| `POST` | `/chat` | Enviar mensagem |
-| `POST` | `/session/new` | Nova sessão |
-| `DELETE` | `/session/{id}` | Limpar sessão |
+## Padrões de Projeto Criacionais Utilizados
+- Singleton (firebaseServico.py): Garante uma única instância da ligação com o Firebase, otimizando recursos e a gestão do estado da ligação.
 
-Documentação interativa: `http://localhost:8000/docs`
+- Factory Method (factory.py): Utilizado para criar diferentes tipos de Participante. Centraliza a lógica de instanciação, permitindo a fácil adição de novos tipos sem alterar o código cliente.
+
+- Builder (builder.py): Empregado para construir o objeto de Evento de forma passo a passo, simplificando a criação de um objeto complexo com múltiplos atributos.
+
+## Padrões de Projeto Comportamentais Utilizados
+- State (state.py): Gere o fluxo da aplicação como uma máquina de estados finitos. Cada menu (Menu Principal, Gerir Eventos, etc.) é um estado, o que organiza a navegação e elimina a necessidade de menus aninhados.
+
+- Command (command.py): Encapsula cada ação do utilizador (como "criar evento" ou "listar participantes") num objeto. Isto elimina longos blocos if/elif nos menus e desacopla quem invoca a ação de quem a executa.
+
+- Observer (observer.py): Usado para desacoplar o cancelamento de um evento da notificação aos participantes. Quando um evento é cancelado, ele notifica os "observadores" (como o serviço de notificação) sem precisar de conhecer os detalhes da sua implementação.
+
+## Padrões de Projeto Estruturais Utilizados
+- Facade (facade.py): Fornece um ponto de entrada único e simplificado para o sistema. O ficheiro evento.py interage apenas com a Facade, que esconde toda a complexidade de inicialização e configuração do sistema.
+
+- Decorator (decorator.py): Adiciona benefícios (como "Camisa" ou "Certificado") a objetos Participante dinamicamente. Está integrado com a Factory para que os participantes já sejam criados com os seus benefícios padrão.
+
+- Adapter (adapter.py): Atua como um "tradutor" para permitir que o sistema importe dados de fontes externas com formatos incompatíveis, como ficheiros CSV de locais, sem alterar a lógica de negócio existente.
