@@ -84,6 +84,22 @@ A inteligência artificial atua através de chamadas estruturadas de API em trê
 2. **Explicação Narrativa (`explain_natural_language`)**: Converte a árvore de regras disparada pelo mecanismo formal em uma explicação fluida e compreensível em português.
 3. **Assistente de Cadastro Lote (`ia`)**: Interpreta comandos em português livre e gera estruturas JSON completas para regras e perguntas (incluindo intervalos de limites de forma autônoma).
 
+### 4.1 Implementação do Mecanismo de Explicação (Por quê / Como)
+O mecanismo de explicação é implementado pela classe `ExplanationEngine` (`core/explanation.py`) e consome a trilha de inferência registrada em `InferenceTrace` (`core/inference_engine.py`).
+
+Durante a execução, o motor registra:
+* **Passos de inferência (`steps`)**: regra aplicada, estratégia usada (forward/backward), condições satisfeitas, conclusão e CF calculado.
+* **Perguntas feitas ao usuário (`questions_asked`)**: atributo perguntado e justificativa textual do motivo da pergunta.
+* **Pilha de objetivos (`goal_stack`)**: sequência de metas ativas no backward chaining para contextualizar o raciocínio.
+
+Com esses dados, o sistema oferece quatro visões explicativas:
+1. **why(atributo)**: informa por que um atributo foi perguntado, incluindo regras dependentes e meta corrente.
+2. **how(atributo, valor)**: reconstrói passo a passo a cadeia de regras que produziu uma conclusão específica.
+3. **full_trace()**: exibe a trilha completa da sessão de inferência.
+4. **session_summary()**: resume fatos iniciais, fatos do usuário e fatos inferidos com seus respectivos CFs.
+
+Essa arquitetura separa claramente inferência (cálculo) e explicação (interpretação), permitindo auditoria e depuração sem acoplar lógica de apresentação ao motor.
+
 ---
 
 ## 5. Gerenciamento de Sessões Web (FastAPI)
@@ -121,3 +137,92 @@ $$CF_{conclusao} = CF_{premissa} \times CF_{regra}$$
 Se mais de uma regra independente apontar para a mesma conclusão diagnóstica, suas certezas são combinadas de forma acumulativa segundo a fórmula do MYCIN:
 $$CF_{acumulado} = CF_1 + CF_2 - (CF_1 \times CF_2)$$
 Esse modelo garante que múltiplas evidências fracas somadas fortaleçam o diagnóstico final.
+
+---
+
+## 8. Exemplos de Consultas Realizadas
+
+### 8.1 Exemplo Médico (Base `diagnostico_gripe.json`)
+**Objetivo**: inferir `suspeita_diagnostica`.
+
+Entrada do usuário (resumo):
+* `febre = sim`
+* `tosse = sim`
+* `dor_corpo = sim`
+* `inicio_sintomas = subito`
+
+Regra disparada (exemplo):
+* `R02` (Gripe Influenza)
+
+Saída esperada:
+* `suspeita_diagnostica = Gripe (Influenza)` com CF calculado pelo encadeamento da regra.
+
+Observação de explicabilidade:
+* A consulta permite responder "Por quê febre foi perguntado?" e "Como suspeita_diagnostica foi obtido?", com base na trilha registrada.
+
+### 8.2 Exemplo Automotivo (Base `diagnostico_automotivo.json`)
+**Objetivo**: inferir `problema`.
+
+Entrada do usuário (resumo):
+* `luzes_painel = apagadas`
+
+Regra disparada (exemplo):
+* `R1` (Problema na Bateria)
+
+Saída esperada:
+* `problema = bateria_descarregada`.
+
+Exemplo adicional numérico:
+* Se `temperatura_motor > 110` e `direcao_dura = sim`, a regra `R6` conclui `problema = emergencia`.
+
+### 8.3 Exemplo de Triagem UPA (Base `triagem_upa_kb.json`)
+**Objetivo**: inferir, em uma única consulta, `classificacao_risco`, `hipotese_diagnostica`, `conduta_triagem`, `encaminhamento` e `orientacao_paciente`.
+
+Entrada do usuário (resumo):
+* `febre = sim`
+* `prostração = sim`
+* `tosse = sim`
+* `dor_corpo = sim`
+* `coriza = sim`
+* `saturacao_o2 = 96`
+* `desidratação = nao`
+
+Principais regras disparadas (exemplo):
+* `R09`: classifica risco como **AMARELO — Urgente (até 60 min)**.
+* `R17`: sugere **Influenza / Síndrome Gripal**.
+* `R29`: define conduta com **antitérmico + hidratação oral + repouso**.
+* `R36`: encaminha para **consultório médico com prioridade amarela**.
+* `R39`: orienta **isolamento respiratório e uso de máscara**.
+
+Saída esperada (resumo):
+* `classificacao_risco = AMARELO — Urgente (até 60 min)`
+* `hipotese_diagnostica = Influenza / Síndrome Gripal`
+* `conduta_triagem = Antitérmico (dipirona/paracetamol) + hidratação oral + repouso`
+* `encaminhamento = CONSULTÓRIO MÉDICO — prioridade amarela`
+* `orientacao_paciente = Use máscara; mantenha distância de outros; informe ao médico sintomas há quantos dias`
+
+### 8.4 Exemplo de Fallback de Hipóteses
+Quando uma KB não define explicitamente o campo `hypotheses`, o motor coleta automaticamente os atributos de conclusão das regras e os usa como metas.
+
+Resultado prático:
+* A consulta continua funcional sem configuração manual de hipóteses.
+* O sistema mantém comportamento domain-agnostic para bases criadas livremente.
+
+---
+
+## 9. Limitações e Possíveis Melhorias
+
+### 9.1 Limitações Atuais
+* **Testes automatizados limitados**: a validação atual prioriza testes manuais de interface e fluxo.
+* **Escalabilidade de sessão**: a abordagem por thread com espera bloqueante atende bem cenários acadêmicos, mas pode exigir ajustes para alta concorrência.
+* **Conflitos semânticos de regras**: bases muito grandes podem conter regras parcialmente contraditórias, exigindo governança adicional.
+* **Dependência de qualidade da KB**: perguntas ambíguas ou opções mal definidas reduzem a precisão final.
+* **Integração LLM dependente de API externa**: latência, custo e disponibilidade podem afetar experiência em tempo real.
+
+### 9.2 Melhorias Propostas
+1. **Expandir suíte de testes**: incluir testes unitários para `inference_engine.py`, `explanation.py` e validações de KB.
+2. **Adicionar validação estática da base**: detectar regras redundantes, ciclos, conflitos e atributos órfãos antes da execução.
+3. **Aprimorar explicabilidade visual**: exportar árvore de inferência e grafo de regras no frontend.
+4. **Evoluir gerenciamento de concorrência**: avaliar fila assíncrona e workers para cargas simultâneas maiores.
+5. **Adicionar métricas operacionais**: tempo médio por consulta, taxa de perguntas por sessão e distribuição de CF final.
+6. **Fortalecer robustez da IA**: fallback determinístico local quando o serviço externo de LLM estiver indisponível.
