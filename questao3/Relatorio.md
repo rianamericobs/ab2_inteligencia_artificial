@@ -15,10 +15,52 @@ Padrões Estruturais: A complexidade da inicialização do sistema é oculta pel
 
 - Propósito da Implementação:
 
-No ecossistema atual do projeto, dados estruturados (valores financeiros, capacidades de locais, listas de fornecedores) são tratados de forma determinística pelos padrões implementados. No entanto, o sistema possuía dados não estruturados sob a forma de feedbacks inseridos pelos participantes. A implementação de um Modelo de Linguagem Grande (LLM) serviu para extrair inteligência de negócio desse texto livre.
+No ecossistema atual do projeto, dados estruturados (valores financeiros, capacidades de locais, listas de fornecedores) são tratados de forma determinística pelos padrões implementados. No entanto, o sistema também possui dados não estruturados, principalmente os feedbacks textuais inseridos pelos participantes. A integração com um Modelo de Linguagem Grande (LLM) foi utilizada para transformar esses relatos em conhecimento gerencial e, na evolução da Questão 3, em ações automatizadas de melhoria.
 
-- Como funciona e o Valor Gerado:
+- Evolução para Agente LLM:
 
-Através de um novo serviço (Singleton) conectado à API do Google Gemini, a aplicação agora consegue buscar no Firebase todas as pesquisas de satisfação de um evento e injetá-las em um prompt estruturado. A IA avalia o texto, compreende o contexto e devolve um resumo tático, informando o sentimento predominante da plateia, bem como agrupando pontos fortes e gargalos do evento.
+A implementação não ficou limitada a uma chamada simples de IA para gerar um texto. Foi criado um agente mínimo baseado em LLM, capaz de executar ciclos curtos de observação, decisão e ação. Em cada execução, o agente seleciona um evento, lê os feedbacks cadastrados no Firebase, recebe um objetivo em linguagem natural informado pelo usuário e carrega registros históricos de sessões anteriores.
 
-Isso eleva a aplicação de um simples banco de registros para uma ferramenta analítica de gestão. O gestor do evento não precisa mais ler dezenas de feedbacks individuais para entender o que deu errado; a IA resume tudo através do padrão de acionamento em comando implementado, respeitando a arquitetura refatorada do software.
+A partir desse contexto, a LLM decide a próxima ação em formato JSON estruturado. O sistema interpreta essa decisão e executa uma ferramenta interna correspondente. Dessa forma, a LLM não atua apenas como "respondedor", mas como componente decisório dentro de um fluxo controlado pela aplicação.
+
+- Ferramentas Disponíveis para o Agente:
+
+O agente possui um conjunto de ferramentas integradas ao próprio sistema:
+
+* `RESUMIR`: compila os feedbacks e gera um resumo gerencial com sentimento geral, pontos fortes, problemas recorrentes e recomendações.
+* `CRIAR_PLANO`: cria um plano de ação com área afetada, problema identificado, ação recomendada, responsável, prazo e prioridade.
+* `REGISTRAR_PRIORIDADE`: registra a prioridade dos problemas mais importantes, junto com uma justificativa.
+* `GERAR_ALERTA`: produz uma mensagem orientativa para a equipe organizadora.
+* `ENCERRAR`: finaliza o ciclo quando as entregas principais já foram realizadas.
+
+- Memória e Persistência:
+
+Os resultados produzidos pelo agente são salvos no Firebase dentro do próprio evento, na estrutura `agente_llm`. O sistema registra resumos, planos de ação, prioridades, mensagens para equipe e sessões completas. Em novas execuções, o agente consulta essa memória histórica para considerar ações anteriores e evoluir o trabalho, em vez de tratar toda execução como se fosse a primeira.
+
+Estruturas utilizadas:
+
+* `agente_llm/resumos`
+* `agente_llm/planos_acao`
+* `agente_llm/prioridades`
+* `agente_llm/mensagens_equipe`
+* `agente_llm/sessoes`
+
+- Valor Gerado:
+
+Com essa abordagem, o sistema deixa de ser apenas um repositório de eventos e feedbacks e passa a funcionar como uma ferramenta de apoio à decisão. O gestor não precisa analisar manualmente todos os comentários dos participantes; o agente resume os dados, identifica gargalos, propõe planos, registra prioridades e orienta a equipe organizadora.
+
+Além disso, a arquitetura preserva os padrões de projeto já existentes. O acionamento do agente foi integrado ao menu por meio do padrão Command, exposto pela Facade e executado sobre a lógica central do `sistemaEvento.py`, mantendo a organização da aplicação.
+
+- Exemplo de Execução:
+
+Um objetivo possível para o agente é:
+
+`Analise os feedbacks dos participantes considerando também as sessões anteriores do agente. Gere um resumo atualizado, revise o plano de ação já criado, registre as prioridades mais importantes e oriente a equipe organizadora sobre os próximos passos para melhorar a próxima edição do evento.`
+
+Com esse objetivo, o agente pode executar uma sequência como:
+
+1. `RESUMIR`: consolidar os feedbacks.
+2. `CRIAR_PLANO`: propor ações práticas.
+3. `REGISTRAR_PRIORIDADE`: definir o que deve ser tratado primeiro.
+
+Esse comportamento demonstra o uso de LLM como agente porque existe percepção do contexto, tomada de decisão estruturada, execução de ferramentas, persistência de memória e continuidade entre sessões.

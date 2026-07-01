@@ -32,7 +32,52 @@ Este projeto foi originalmente desenvolvido pela aluna ELIANE LAIS DE MELO BASTO
 * **Coordenação de Fornecedores:** Gestão completa de fornecedores, incluindo adição, listagem e atualização de status.
 * **Gestão de Palestrantes (Speakers):** Adição, listagem e remoção de palestrantes de um evento.
 * **Feedback e Pesquisas:** Criação de pesquisas e recolha de feedback dos participantes.
-* **Analisar por IA:** A inteligência artificial analisa os feedbacks e da uma resposta
+* **Análise por IA:** A inteligência artificial resume os feedbacks do evento e identifica sentimento geral, pontos fortes, problemas recorrentes e recomendações.
+* **Agente LLM de Melhoria:** Além de responder uma análise pontual, o sistema possui um agente baseado em LLM que executa ciclos curtos de observação, decisão e ação. O agente recebe um objetivo em linguagem natural, consulta os feedbacks e a memória histórica salva no Firebase, decide a próxima ação em JSON estruturado e executa ferramentas internas para resumir feedbacks, criar plano de ação, registrar prioridades e gerar mensagens para a equipe.
+
+---
+
+## Agente LLM de Melhoria de Eventos
+
+A Questão 3 foi implementada como uma aplicação com agente baseado em LLM dentro do sistema de gestão de eventos. O agente não apenas gera texto: ele analisa o estado do evento, decide uma ação, executa uma ferramenta do sistema e registra o resultado no Firebase.
+
+Fluxo geral do agente:
+
+1. O usuário escolhe um evento com feedbacks cadastrados.
+2. O usuário informa um objetivo, por exemplo: "analisar feedbacks, gerar relatório, planejar melhorias e orientar a equipe".
+3. O agente compila os feedbacks e carrega a memória histórica de execuções anteriores.
+4. A LLM decide a próxima ação em JSON estruturado.
+5. O sistema executa a ferramenta correspondente.
+6. Os resultados são salvos no Firebase e a sessão é registrada.
+
+Ferramentas disponíveis para o agente:
+
+* `RESUMIR`: gera um resumo gerencial dos feedbacks.
+* `CRIAR_PLANO`: cria um plano de ação com área, problema, ação, responsável, prazo e prioridade.
+* `REGISTRAR_PRIORIDADE`: registra prioridade e justificativa para os principais problemas.
+* `GERAR_ALERTA`: gera uma mensagem orientativa para a equipe organizadora.
+* `ENCERRAR`: finaliza o ciclo quando as entregas principais já foram feitas.
+
+Dados gravados no Firebase:
+
+* `eventos/<nome_evento>/agente_llm/resumos`
+* `eventos/<nome_evento>/agente_llm/planos_acao`
+* `eventos/<nome_evento>/agente_llm/prioridades`
+* `eventos/<nome_evento>/agente_llm/mensagens_equipe`
+* `eventos/<nome_evento>/agente_llm/sessoes`
+
+Para executar pelo menu:
+
+```bash
+python evento.py
+```
+
+Depois selecione:
+
+```text
+1. Gerir Evento
+12. Executar agente de melhoria com IA
+```
 
 ---
 
