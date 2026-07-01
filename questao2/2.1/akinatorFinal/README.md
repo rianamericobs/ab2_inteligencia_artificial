@@ -80,6 +80,21 @@ Cada entidade possui:
 - `descricao`.
 - `atributos` com valores `true` ou `false`.
 
+## Estratégia de inferência
+
+O sistema a estratégia de busca em espaço de hipóteses:
+
+- cada resposta do usuário atualiza o conjunto de candidatas;
+- entidades incompatíveis são removidas;
+- a próxima pergunta é escolhida pelo atributo que melhor separa os candidatos;
+- quando não há certeza absoluta, o sistema usa um ranking por similaridade para escolher a hipótese mais provável.
+
+Isso combina uma base de conhecimento explícita com um mecanismo de raciocínio heurístico, o que caracteriza um método híbrido entre regras de eliminação e seleção gulosa de perguntas.
+
+## Relatório técnico
+
+O arquivo com a descrição completa do domínio, da representação do conhecimento, do mecanismo de inferência, exemplos de interação e análise dos resultados está em `relatorio.md`.
+
 ## Padrão de nomenclatura
 
 Os identificadores do código Python foram ajustados para camelCase, por exemplo:
