@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico Bayesiano — Dengue & Chikungunya</title>
+<style>
+  :root {
+    --bg: #F0F4F8;
+    --surface: #FFFFFF;
+    --surface-alt: #F7FAFC;
+    --border: #E2E8F0;
+    --border-strong: #CBD5E0;
+    --text: #1A202C;
+    --text-secondary: #4A5568;
+    --text-muted: #718096;
+    --dengue: #E53E3E;
+    --dengue-light: #FFF5F5;
+    --dengue-mid: #FC8181;
+    --chik: #3182CE;
+    --chik-light: #EBF8FF;
+    --chik-mid: #63B3ED;
+    --safe: #38A169;
+    --safe-light: #F0FFF4;
+    --warn: #D69E2E;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #1A365D 0%, #2C5282 60%, #2B6CB0 100%);
+    color: white;
+    padding: 2.5rem 2rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+  }
+
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .header-inner { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+
+  .header-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    color: rgba(255,255,255,0.9);
+  }
+
+  .header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+  }
+
+  .header p {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.75);
+    max-width: 520px;
+  }
+
+  .main { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
+  }
+
+  .card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .card-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .card-title { font-size: 1rem; font-weight: 600; }
+  .card-subtitle { font-size: 0.8rem; color: var(--text-muted); margin-top: 1px; }
+  .card-body { padding: 1.5rem; }
+
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .symptom-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .symptom-card {
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    background: var(--surface-alt);
+    position: relative;
+    user-select: none;
+  }
+
+  .symptom-card:hover { border-color: #3182CE; background: #EBF8FF; }
+
+  .symptom-card.active {
+    border-color: #3182CE;
+    background: #EBF8FF;
+    box-shadow: 0 0 0 3px rgba(49,130,206,0.15);
+  }
+
+  .symptom-card.active .symptom-icon { background: #BEE3F8; }
+  .symptom-card.active .toggle-dot { background: #3182CE; transform: translateX(18px); }
+
+  .symptom-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--radius-sm);
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    margin-bottom: 0.75rem;
+    transition: background 0.18s;
+  }
+
+  .symptom-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .symptom-desc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  .toggle-track {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    width: 36px; height: 18px;
+    background: var(--border-strong);
+    border-radius: 9px;
+    transition: background 0.18s;
+  }
+
+  .symptom-card.active .toggle-track { background: #BEE3F8; }
+
+  .toggle-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #A0AEC0;
+    position: absolute;
+    top: 2px; left: 2px;
+    transition: all 0.18s ease;
+  }
+
+  .btn-diagnose {
+    width: 100%;
+    padding: 0.9rem;
+    background: linear-gradient(135deg, #2B6CB0 0%, #3182CE 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    letter-spacing: 0.2px;
+    margin-top: 1.25rem;
+  }
+
+  .btn-diagnose:hover {
+    background: linear-gradient(135deg, #1A4C7E 0%, #2B6CB0 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(49,130,206,0.35);
+  }
+
+  .btn-diagnose:active { transform: translateY(0); }
+  .btn-diagnose:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .results-area { display: none; }
+  .results-area.visible { display: block; }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .disease-card {
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .disease-card.dengue {
+    background: var(--dengue-light);
+    border: 2px solid #FC8181;
+  }
+
+  .disease-card.chik {
+    background: var(--chik-light);
+    border: 2px solid #63B3ED;
+  }
+
+  .disease-card.dengue.low-risk { border-color: var(--border-strong); background: var(--surface-alt); }
+  .disease-card.chik.low-risk { border-color: var(--border-strong); background: var(--surface-alt); }
+
+  .disease-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .disease-card.dengue .disease-label { color: var(--dengue); }
+  .disease-card.chik .disease-label { color: var(--chik); }
+  .disease-card.low-risk .disease-label { color: var(--text-muted); }
+
+  .disease-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  .prob-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 0.5rem;
+  }
+
+  .prob-label { font-size: 0.75rem; color: var(--text-secondary); min-width: 30px; }
+  .prob-bar-bg {
+    flex: 1; height: 8px;
+    background: rgba(0,0,0,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .prob-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .dengue .prob-bar-fill { background: var(--dengue); }
+  .chik .prob-bar-fill { background: var(--chik); }
+  .dengue.low-risk .prob-bar-fill { background: var(--text-muted); }
+  .chik.low-risk .prob-bar-fill { background: var(--text-muted); }
+
+  .prob-pct {
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-width: 38px;
+    text-align: right;
+  }
+
+  .dengue .prob-pct { color: var(--dengue); }
+  .chik .prob-pct { color: var(--chik); }
+  .dengue.low-risk .prob-pct, .chik.low-risk .prob-pct { color: var(--text-muted); }
+
+  .big-pct {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+  .dengue .big-pct { color: var(--dengue); }
+  .chik .big-pct { color: var(--chik); }
+  .low-risk .big-pct { color: var(--text-muted); }
+
+  .risk-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+  }
+
+  .risk-high { background: #FED7D7; color: #C53030; }
+  .risk-mod { background: #FEEBC8; color: #C05621; }
+  .risk-low { background: #C6F6D5; color: #276749; }
+
+  .interpretation {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem;
+    margin-top: 0.5rem;
+  }
+
+  .interpretation-icon { font-size: 1.25rem; margin-bottom: 0.5rem; }
+  .interpretation h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.4rem; }
+  .interpretation p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; }
+
+  .network-viz {
+    background: var(--surface-alt);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .experiments {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .exp-btn {
+    padding: 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-alt);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+
+  .exp-btn:hover { border-color: #3182CE; background: #EBF8FF; }
+  .exp-btn.active { border-color: #3182CE; background: #EBF8FF; box-shadow: 0 0 0 3px rgba(49,130,206,0.12); }
+
+  .exp-num {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #3182CE;
+    margin-bottom: 4px;
+  }
+
+  .exp-title { font-size: 0.8rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .exp-desc { font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; }
+
+  .loading-dots { display: inline-flex; gap: 4px; align-items: center; }
+  .loading-dots span {
+    width: 6px; height: 6px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-in { animation: slideUp 0.35s ease forwards; }
+
+  .footnote {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 1rem 0 0.5rem;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+
+  .cpt-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .cpt-table th {
+    background: var(--surface-alt);
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border);
+    font-size: 0.72rem;
+    letter-spacing: 0.3px;
+  }
+  .cpt-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .cpt-table tr:last-child td { border-bottom: none; }
+  .cpt-table .yes { color: var(--dengue); font-weight: 600; }
+  .cpt-table .prob { color: var(--chik); font-weight: 500; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  .info-item {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.9rem 1rem;
+  }
+
+  .info-item-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-muted); margin-bottom: 0.35rem; }
+  .info-item-value { font-size: 0.88rem; font-weight: 500; color: var(--text); }
+
+  @media (max-width: 640px) {
+    .symptom-grid { grid-template-columns: 1fr; }
+    .result-grid { grid-template-columns: 1fr; }
+    .experiments { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+    .header h1 { font-size: 1.5rem; }
+    .main { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-badge">🔬 IA — Questão 2.2</div>
+    <h1>Diagnóstico Médico<br>com Redes Bayesianas</h1>
+    <p>Inferência probabilística para diferenciação de Dengue e Chikungunya a partir de sintomas observados.</p>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:#EBF8FF;">🧠</div>
+      <div>
+        <div class="card-title">Estrutura da Rede Bayesiana</div>
+        <div class="card-subtitle">Doenças como nós raiz — sintomas como nós filhos</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="network-viz">
+        <svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#A0AEC0"/>
+            </marker>
+          </defs>
+
+          <line x1="200" y1="90" x2="145" y2="185" stroke="#FC8181" stroke-width="1.5" marker-end="url(#arr)" stroke-dasharray="4,3"/>
+          <line x1="210" y1="92" x2="290" y2="183" stroke="#FC8181" stroke-width="1.5" marker-end="url(#arr)" stroke-dasharray="4,3"/>
+          <line x1="220" y1="90" x2="440" y2="183" stroke="#FC8181" stroke-width="1.5" marker-end="url(#arr)" stroke-dasharray="4,3"/>
+
+          <line x1="560" y1="90" x2="622" y2="185" stroke="#63B3ED" stroke-width="1.5" marker-end="url(#arr)" stroke-dasharray="4,3"/>
+          <line x1="550" y1="92" x2="465" y2="183" stroke="#63B3ED" stroke-width="1.5" marker-end="url(#arr)" stroke-dasharray="4,3"/>
+          <line x1="540" y1="90" x2="295" y2="183" stroke="#63B3ED" stroke-width="1.5" marker-end="url(#arr)" stroke-dasharray="4,3"/>
+
+          <rect x="130" y="48" width="160" height="64" rx="10" fill="#FFF5F5" stroke="#FC8181" stroke-width="2"/>
+          <text x="210" y="74" text-anchor="middle" font-size="13" font-weight="700" fill="#C53030">Dengue</text>
+          <text x="210" y="90" text-anchor="middle" font-size="11" fill="#E53E3E">P = 15%</text>
+          <text x="210" y="104" text-anchor="middle" font-size="10" fill="#FC8181">nó raiz</text>
+
+          <rect x="472" y="48" width="176" height="64" rx="10" fill="#EBF8FF" stroke="#63B3ED" stroke-width="2"/>
+          <text x="560" y="74" text-anchor="middle" font-size="13" font-weight="700" fill="#2B6CB0">Chikungunya</text>
+          <text x="560" y="90" text-anchor="middle" font-size="11" fill="#3182CE">P = 5%</text>
+          <text x="560" y="104" text-anchor="middle" font-size="10" fill="#63B3ED">nó raiz</text>
+
+          <rect x="50" y="196" width="148" height="50" rx="8" fill="#FFFBEB" stroke="#F6AD55" stroke-width="1.5"/>
+          <text x="124" y="218" text-anchor="middle" font-size="11" font-weight="600" fill="#744210">🌡 Febre Alta</text>
+          <text x="124" y="234" text-anchor="middle" font-size="10" fill="#D69E2E">sintoma</text>
+
+          <rect x="222" y="196" width="148" height="50" rx="8" fill="#FAF5FF" stroke="#B794F4" stroke-width="1.5"/>
+          <text x="296" y="218" text-anchor="middle" font-size="11" font-weight="600" fill="#553C9A">🦴 Dor Articular</text>
+          <text x="296" y="234" text-anchor="middle" font-size="10" fill="#805AD5">sintoma</text>
+
+          <rect x="394" y="196" width="148" height="50" rx="8" fill="#F0FFF4" stroke="#68D391" stroke-width="1.5"/>
+          <text x="468" y="218" text-anchor="middle" font-size="11" font-weight="600" fill="#22543D">🔴 Manchas Pele</text>
+          <text x="468" y="234" text-anchor="middle" font-size="10" fill="#38A169">sintoma</text>
+
+          <rect x="566" y="196" width="148" height="50" rx="8" fill="#F7FAFC" stroke="#CBD5E0" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <text x="640" y="218" text-anchor="middle" font-size="11" fill="#A0AEC0">outros sintomas</text>
+          <text x="640" y="234" text-anchor="middle" font-size="10" fill="#CBD5E0">omitidos</text>
+        </svg>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:1rem;">
+        <div style="background:#FFF5F5;border:1px solid #FC8181;border-radius:8px;padding:0.75rem 1rem;">
+          <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#E53E3E;margin-bottom:6px;">Dengue → Sintomas</div>
+          <div style="font-size:0.78rem;color:#742A2A;line-height:1.5;">Febre alta: 90%, Dor articular: 40%, Manchas: 50%</div>
+        </div>
+        <div style="background:#EBF8FF;border:1px solid #63B3ED;border-radius:8px;padding:0.75rem 1rem;">
+          <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#3182CE;margin-bottom:6px;">Chikungunya → Sintomas</div>
+          <div style="font-size:0.78rem;color:#1A365D;line-height:1.5;">Febre alta: 95%, Dor articular: 90%, Manchas: 60%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:#F0FFF4;">⚡</div>
+      <div>
+        <div class="card-title">Experimentos pré-definidos</div>
+        <div class="card-subtitle">Cenários da questão 2.2 — clique para carregar</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="experiments">
+        <button class="exp-btn" onclick="loadExperiment(1)">
+          <div class="exp-num">Exp. 1</div>
+          <div class="exp-title">Sintomas básicos</div>
+          <div class="exp-desc">Febre alta + dor articular</div>
+        </button>
+        <button class="exp-btn" onclick="loadExperiment(2)">
+          <div class="exp-num">Exp. 2</div>
+          <div class="exp-title">Sintomas completos</div>
+          <div class="exp-desc">Febre + dor + manchas na pele</div>
+        </button>
+        <button class="exp-btn" onclick="loadExperiment(3)">
+          <div class="exp-num">Exp. 3</div>
+          <div class="exp-title">Sem dor articular</div>
+          <div class="exp-desc">Febre + manchas, sem dor nas juntas</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:#F0F4FF;">🩺</div>
+      <div>
+        <div class="card-title">Entrada de sintomas</div>
+        <div class="card-subtitle">Selecione os sintomas observados no paciente</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="section-label">Sintomas apresentados</div>
+      <div class="symptom-grid">
+        <div class="symptom-card" id="card-febre" onclick="toggleSymptom('febre')">
+          <div class="toggle-track"><div class="toggle-dot"></div></div>
+          <div class="symptom-icon">🌡️</div>
+          <div class="symptom-name">Febre Alta</div>
+          <div class="symptom-desc">Temperatura ≥ 38,5°C de início súbito</div>
+        </div>
+        <div class="symptom-card" id="card-dor" onclick="toggleSymptom('dor')">
+          <div class="toggle-track"><div class="toggle-dot"></div></div>
+          <div class="symptom-icon">🦴</div>
+          <div class="symptom-name">Dor Articular</div>
+          <div class="symptom-desc">Artralgia intensa nas juntas e extremidades</div>
+        </div>
+        <div class="symptom-card" id="card-manchas" onclick="toggleSymptom('manchas')">
+          <div class="toggle-track"><div class="toggle-dot"></div></div>
+          <div class="symptom-icon">🔴</div>
+          <div class="symptom-name">Manchas na Pele</div>
+          <div class="symptom-desc">Exantema maculopapular pelo corpo</div>
+        </div>
+      </div>
+
+      <button class="btn-diagnose" id="btn-diag" onclick="runDiagnosis()" disabled>
+        Selecione ao menos um sintoma para diagnosticar
+      </button>
+    </div>
+  </div>
+
+  <div class="results-area" id="results">
+    <div class="card animate-in">
+      <div class="card-header">
+        <div class="card-icon" style="background:#FFF5F5;">📊</div>
+        <div>
+          <div class="card-title">Resultado da inferência bayesiana</div>
+          <div class="card-subtitle" id="result-subtitle">Probabilidades posteriores P(Doença | Evidências)</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="result-grid">
+          <div class="disease-card dengue" id="dc-dengue">
+            <div class="disease-label">🦟 Dengue</div>
+            <div class="big-pct" id="dengue-sim-pct">—</div>
+            <div class="disease-name">probabilidade</div>
+            <div class="prob-row">
+              <span class="prob-label">Sim</span>
+              <div class="prob-bar-bg"><div class="prob-bar-fill" id="bar-dengue-sim" style="width:0%"></div></div>
+              <span class="prob-pct" id="pct-dengue-sim">—</span>
+            </div>
+            <div class="prob-row">
+              <span class="prob-label">Não</span>
+              <div class="prob-bar-bg"><div class="prob-bar-fill" id="bar-dengue-nao" style="width:0%"></div></div>
+              <span class="prob-pct" id="pct-dengue-nao">—</span>
+            </div>
+            <div id="badge-dengue"></div>
+          </div>
+
+          <div class="disease-card chik" id="dc-chik">
+            <div class="disease-label">🦟 Chikungunya</div>
+            <div class="big-pct" id="chik-sim-pct">—</div>
+            <div class="disease-name">probabilidade</div>
+            <div class="prob-row">
+              <span class="prob-label">Sim</span>
+              <div class="prob-bar-bg"><div class="prob-bar-fill" id="bar-chik-sim" style="width:0%"></div></div>
+              <span class="prob-pct" id="pct-chik-sim">—</span>
+            </div>
+            <div class="prob-row">
+              <span class="prob-label">Não</span>
+              <div class="prob-bar-bg"><div class="prob-bar-fill" id="bar-chik-nao" style="width:0%"></div></div>
+              <span class="prob-pct" id="pct-chik-nao">—</span>
+            </div>
+            <div id="badge-chik"></div>
+          </div>
+        </div>
+
+        <div class="interpretation" id="interpretation">
+          <div class="interpretation-icon">💬</div>
+          <h3 id="interp-title">Interpretação clínica</h3>
+          <p id="interp-text">—</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:#FAF5FF;">📋</div>
+      <div>
+        <div class="card-title">Tabelas de Probabilidade Condicional (CPTs)</div>
+        <div class="card-subtitle">Probabilidades P(Sintoma | Dengue, Chikungunya)</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="section-label">Febre Alta</div>
+      <table class="cpt-table" style="margin-bottom:1.25rem;">
+        <thead>
+          <tr>
+            <th>Dengue</th><th>Chikungunya</th>
+            <th>P(Febre=Sim)</th><th>P(Febre=Não)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="yes">Sim</td><td class="yes">Sim</td><td class="prob">99%</td><td>1%</td></tr>
+          <tr><td class="yes">Sim</td><td>Não</td><td class="prob">90%</td><td>10%</td></tr>
+          <tr><td>Não</td><td class="yes" style="color:#3182CE">Sim</td><td class="prob">95%</td><td>5%</td></tr>
+          <tr><td>Não</td><td>Não</td><td class="prob">5%</td><td>95%</td></tr>
+        </tbody>
+      </table>
+
+      <div class="info-grid">
+        <div>
+          <div class="section-label">Dor Articular</div>
+          <table class="cpt-table">
+            <thead><tr><th>Dengue</th><th>Chik.</th><th>P(Sim)</th></tr></thead>
+            <tbody>
+              <tr><td class="yes">Sim</td><td class="yes">Sim</td><td class="prob">95%</td></tr>
+              <tr><td class="yes">Sim</td><td>Não</td><td class="prob">40%</td></tr>
+              <tr><td>Não</td><td class="yes" style="color:#3182CE">Sim</td><td class="prob">90%</td></tr>
+              <tr><td>Não</td><td>Não</td><td class="prob">10%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <div class="section-label">Manchas na Pele</div>
+          <table class="cpt-table">
+            <thead><tr><th>Dengue</th><th>Chik.</th><th>P(Sim)</th></tr></thead>
+            <tbody>
+              <tr><td class="yes">Sim</td><td class="yes">Sim</td><td class="prob">80%</td></tr>
+              <tr><td class="yes">Sim</td><td>Não</td><td class="prob">50%</td></tr>
+              <tr><td>Não</td><td class="yes" style="color:#3182CE">Sim</td><td class="prob">60%</td></tr>
+              <tr><td>Não</td><td>Não</td><td class="prob">5%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <span>⚠️</span>
+    <span>Sistema acadêmico — não substitui avaliação médica profissional. Questão 2.2 — Lista de IA 2026.</span>
+  </div>
+
+</div>
+
+<script>
+const symptoms = { febre: false, dor: false, manchas: false };
+
+function toggleSymptom(s) {
+  symptoms[s] = !symptoms[s];
+  const card = document.getElementById('card-' + s);
+  card.classList.toggle('active', symptoms[s]);
+  updateBtn();
+  clearResults();
+}
+
+function updateBtn() {
+  const any = Object.values(symptoms).some(Boolean);
+  const btn = document.getElementById('btn-diag');
+  btn.disabled = !any;
+  btn.textContent = any ? '▶  Calcular probabilidades posteriores' : 'Selecione ao menos um sintoma para diagnosticar';
+}
+
+function clearResults() {
+  document.getElementById('results').classList.remove('visible');
+}
+
+function loadExperiment(n) {
+  document.querySelectorAll('.exp-btn').forEach((b,i) => b.classList.toggle('active', i+1===n));
+  symptoms.febre = false; symptoms.dor = false; symptoms.manchas = false;
+  if (n===1) { symptoms.febre=true; symptoms.dor=true; }
+  if (n===2) { symptoms.febre=true; symptoms.dor=true; symptoms.manchas=true; }
+  if (n===3) { symptoms.febre=true; symptoms.manchas=true; }
+  ['febre','dor','manchas'].forEach(s => {
+    document.getElementById('card-'+s).classList.toggle('active', symptoms[s]);
+  });
+  updateBtn();
+  clearResults();
+  setTimeout(() => runDiagnosis(), 150);
+}
+
+function computePosteriors() {
+  const pD = 0.15, pC = 0.05;
+  const pNotD = 0.85, pNotC = 0.95;
+
+  const pFD  = [[0.99,0.90],[0.95,0.05]];
+  const pFnD = [[0.01,0.10],[0.05,0.95]];
+  const pAD  = [[0.95,0.40],[0.90,0.10]];
+  const pAnD = [[0.05,0.60],[0.10,0.90]];
+  const pMD  = [[0.80,0.50],[0.60,0.05]];
+  const pMnD = [[0.20,0.50],[0.40,0.95]];
+
+  const combos = [
+    { d:'Sim', c:'Sim', pd: pD*pC },
+    { d:'Sim', c:'Nao', pd: pD*pNotC },
+    { d:'Nao', c:'Sim', pd: pNotD*pC },
+    { d:'Nao', c:'Nao', pd: pNotD*pNotC }
+  ];
+
+  const di = (v) => v==='Sim' ? 0 : 1;
+
+  const weights = combos.map(({d,c,pd}) => {
+    let w = pd;
+    if (symptoms.febre) w *= (pFD[di(c)][di(d)]);
+    if (symptoms.dor)   w *= (pAD[di(c)][di(d)]);
+    if (symptoms.manchas) w *= (pMD[di(c)][di(d)]);
+    return {...{d,c}, w};
+  });
+
+  const total = weights.reduce((a,x) => a+x.w, 0);
+  if (total === 0) return null;
+
+  const norm = weights.map(x => ({...x, p: x.w/total}));
+
+  const pDS = norm.filter(x=>x.d==='Sim').reduce((a,x)=>a+x.p,0);
+  const pDN = norm.filter(x=>x.d==='Nao').reduce((a,x)=>a+x.p,0);
+  const pCS = norm.filter(x=>x.c==='Sim').reduce((a,x)=>a+x.p,0);
+  const pCN = norm.filter(x=>x.c==='Nao').reduce((a,x)=>a+x.p,0);
+
+  return { dengue: { sim: pDS, nao: pDN }, chik: { sim: pCS, nao: pCN } };
+}
+
+function riskLevel(p) {
+  if (p >= 0.5) return 'high';
+  if (p >= 0.2) return 'mod';
+  return 'low';
+}
+
+function riskLabel(p) {
+  if (p >= 0.5) return 'Alto risco';
+  if (p >= 0.2) return 'Risco moderado';
+  return 'Baixo risco';
+}
+
+function buildEvidenceLabel() {
+  const parts = [];
+  if (symptoms.febre) parts.push('Febre Alta');
+  if (symptoms.dor) parts.push('Dor Articular');
+  if (symptoms.manchas) parts.push('Manchas na Pele');
+  return 'P(Doença | ' + parts.join(', ') + ')';
+}
+
+function buildInterpretation(r) {
+  const ds = r.dengue.sim, cs = r.chik.sim;
+  const lead = ds > cs ? 'dengue' : cs > ds ? 'chikungunya' : 'ambas';
+
+  if (ds < 0.1 && cs < 0.1) {
+    return {
+      icon: '✅',
+      title: 'Baixa probabilidade de arbovirose',
+      text: `Com os sintomas selecionados, tanto Dengue (${fmt(ds)}) quanto Chikungunya (${fmt(cs)}) apresentam baixa probabilidade. O quadro clínico não é sugestivo dessas arboviroses, mas outros diagnósticos diferenciais devem ser investigados.`
+    };
+  }
+
+  if (lead === 'dengue') {
+    return {
+      icon: '🦟',
+      title: `Dengue mais provável (${fmt(ds)} vs ${fmt(cs)})`,
+      text: `A combinação de sintomas aponta mais para Dengue. A ${symptoms.manchas && !symptoms.dor ? 'presença de manchas sem dor articular intensa é ' : ''}${symptoms.febre && symptoms.dor && !symptoms.manchas ? 'febre com dor articular moderada é ' : ''}característica. Recomenda-se exame laboratorial (NS1, sorologia) para confirmação.`
+    };
+  }
+  if (lead === 'chikungunya') {
+    return {
+      icon: '🦟',
+      title: `Chikungunya mais provável (${fmt(cs)} vs ${fmt(ds)})`,
+      text: `O perfil de sintomas favorece Chikungunya. ${symptoms.dor ? 'A dor articular intensa é o marcador mais característico desta arbovirose. ' : ''}A inferência bayesiana actualiza as probabilidades priori (5%) para ${fmt(cs)}, refletindo forte evidência clínica.`
+    };
+  }
+  return {
+    icon: '⚠️',
+    title: 'Diagnóstico diferencial inconclusivo',
+    text: `Dengue (${fmt(ds)}) e Chikungunya (${fmt(cs)}) apresentam probabilidades próximas. A distinção clínica é difícil neste cenário — exames laboratoriais (NS1, PCR, sorologia IgM) são essenciais para confirmação.`
+  };
+}
+
+function fmt(v) { return (v*100).toFixed(1) + '%'; }
+
+function runDiagnosis() {
+  const btn = document.getElementById('btn-diag');
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span> Calculando...';
+
+  setTimeout(() => {
+    const r = computePosteriors();
+    if (!r) { btn.disabled=false; btn.textContent=origText; return; }
+
+    document.getElementById('result-subtitle').textContent = buildEvidenceLabel();
+
+    const ds = r.dengue.sim, dn = r.dengue.nao, cs = r.chik.sim, cn = r.chik.nao;
+
+    document.getElementById('dengue-sim-pct').textContent = fmt(ds);
+    document.getElementById('pct-dengue-sim').textContent = fmt(ds);
+    document.getElementById('pct-dengue-nao').textContent = fmt(dn);
+    document.getElementById('bar-dengue-sim').style.width = (ds*100).toFixed(1)+'%';
+    document.getElementById('bar-dengue-nao').style.width = (dn*100).toFixed(1)+'%';
+
+    document.getElementById('chik-sim-pct').textContent = fmt(cs);
+    document.getElementById('pct-chik-sim').textContent = fmt(cs);
+    document.getElementById('pct-chik-nao').textContent = fmt(cn);
+    document.getElementById('bar-chik-sim').style.width = (cs*100).toFixed(1)+'%';
+    document.getElementById('bar-chik-nao').style.width = (cn*100).toFixed(1)+'%';
+
+    const rl_d = riskLevel(ds), rl_c = riskLevel(cs);
+    document.getElementById('dc-dengue').className = 'disease-card dengue' + (rl_d==='low'?' low-risk':'');
+    document.getElementById('dc-chik').className = 'disease-card chik' + (rl_c==='low'?' low-risk':'');
+
+    document.getElementById('badge-dengue').innerHTML = `<span class="risk-badge risk-${rl_d}">${riskLabel(ds)}</span>`;
+    document.getElementById('badge-chik').innerHTML = `<span class="risk-badge risk-${rl_c}">${riskLabel(cs)}</span>`;
+
+    const interp = buildInterpretation(r);
+    document.getElementById('interpretation').querySelector('.interpretation-icon').textContent = interp.icon;
+    document.getElementById('interp-title').textContent = interp.title;
+    document.getElementById('interp-text').textContent = interp.text;
+
+    document.getElementById('results').classList.add('visible');
+    document.getElementById('results').scrollIntoView({behavior:'smooth', block:'nearest'});
+
+    btn.disabled = false;
+    btn.textContent = '↺  Recalcular diagnóstico';
+  }, 420);
+}
+</script>
+</body>
+</html>
